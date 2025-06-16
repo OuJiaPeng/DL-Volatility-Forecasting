@@ -1,0 +1,11 @@
+pandas
+numpy
+matplotlib
+scikit-learn
+torch
+tensorboard
+python-dotenv
+eodhd
+tqdm
+arch
+yaml
