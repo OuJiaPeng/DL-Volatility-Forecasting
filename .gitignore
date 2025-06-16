@@ -1,0 +1,30 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+
+# Environment files
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# VS Code settings
+.vscode/
+
+# Data, logs, and checkpoints
+checkpoints/
+logs/
+*.log
+
+# Outputs
+outputs/patch_preds.npy
+!outputs/
+!outputs/plot_preds.py
+!outputs/realized_vol_prediction_plot.png
+!outputs/metrics_patch_vs_garch.csv
+
+# OS files
+.DS_Store
+Thumbs.db
+

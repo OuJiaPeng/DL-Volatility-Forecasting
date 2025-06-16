@@ -1,0 +1,26 @@
+# Default config for multivariate PatchTST
+# ...copy from PatchTST/default.yaml and update for multivariate...
+# TODO: Set input channels/features > 1
+
+data:
+  csv: compare/targets/with_all_targets.csv
+
+model:
+  in_channels: 3  # Example: 3 features/assets, update as needed
+  seq_len: 60
+  patch_size: 12
+  emb_dim: 64
+  n_heads: 4
+  ff_mult: 4
+  n_layers: 3
+  dropout: 0.1
+  channel_independent: true
+  out_horizon: 5
+
+train:
+  epochs: 100
+  batch_size: 32
+  lr: 0.0003
+  ckpt_path: checkpoints/logs/patchtst.pt
+  log_dir: logs
+  resume: false
