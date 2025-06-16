@@ -1,3 +1,5 @@
+#data/data.py
+
 import os
 import pandas as pd
 from datetime import datetime
@@ -10,11 +12,11 @@ def fetch_asset(
     end_date:   str = None,
     out_path:   str = 'data/btc_2014_now.csv'
 ):
-    """
-    Download daily adjusted-close data & compute returns for a given asset using EODHD.
-    Saves a CSV with columns: ['adjusted_close', 'return'].
-    Defaults to 2014-01-01 → today for BTC.
-    """
+
+    # download daily adjusted close data; compute return; uses EODHD API
+    # saves as CSV with columns: ['adjusted_close', 'return']
+    # defaults to 2014-01-01 → today for BTC.
+   
     if end_date is None:
         end_date = datetime.today().strftime('%Y-%m-%d')
 
@@ -32,7 +34,7 @@ def fetch_asset(
     df.set_index('date', inplace=True)
     df.sort_index(inplace=True)
 
-    # Compute daily returns
+    # compute daily returns
     df['return'] = df['adjusted_close'].pct_change().fillna(0)
 
     out_df = df[['adjusted_close', 'return']]
@@ -45,5 +47,5 @@ if __name__ == '__main__':
     load_dotenv()
     api_key = os.getenv("EODHD_API_KEY")
     assert api_key, "Please set EODHD_API_KEY in your environment"
-    # Fetch Bitcoin by default
+    # fetches Bitcoin by default
     fetch_asset(api_key)

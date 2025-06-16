@@ -1,4 +1,4 @@
-# PatchTST/train.py
+# PatchTST/train_univar.py
 
 import os
 import sys
@@ -17,7 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 from numpy.lib.stride_tricks import sliding_window_view
 
 from utils.config import get_config
-from models.patchtst import PatchTST
+from models.patchtst_univar import PatchTST
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
 
@@ -40,7 +40,7 @@ class SliceDataset(Dataset):
 def train():
     # parse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='PatchTST/default.yaml')
+    parser.add_argument('--config', type=str, default='PatchTST/default_univar.yaml')
     parser.add_argument('--target_col', type=str, default='target_std')
     parser.add_argument('--csv', type=str, default='compare/targets/with_all_targets.csv')
     args = parser.parse_args()
@@ -147,9 +147,9 @@ def train():
     real_mse = ((windows - preds_unscaled)**2).mean()
     print(f"Real-vol MSE: {real_mse:.5e}")
 
-    # save predictions
+    # Save predictions (univariate only)
     os.makedirs('outputs', exist_ok=True)
-    np.save('outputs/patch_preds.npy', preds_unscaled)
+    np.save('outputs/patch_preds_univar.npy', preds_unscaled)
 
 if __name__ == '__main__':
     train()
