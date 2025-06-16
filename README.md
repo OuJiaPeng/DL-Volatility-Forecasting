@@ -1,13 +1,15 @@
 # 📈 Volatility Forecasting with Deep Learning
 
-This project continues my research at HKUST, focusing on deep learning for stochastic process modeling and volatility forecasting. The main goal is to explore and implement advanced transformer architectures—such as Temporal Fusion Transformer (TFT) and PatchTST—for multivariate time series analysis.
+This project focuses on deep learning for stoch process modeling and vol forecating. My main goal is just exploring and implementing transformer models to do such tasks.
+
+Currently, a PatchTST model is being used to perform vol forecasting for BTC.
 
 ---
 
 ## ✨ Features
-- **Transformer-based Volatility Forecasting:** PatchTST and TFT models for time series
+- **Transformer-based Volatility Forecasting:** PatchTST for time series
 - **Custom Deep Learning Algorithms:** Ongoing work towards building models from scratch
-- **Comprehensive Evaluation:** MSE, MAE, QLIKE, Directional Accuracy, and more
+- **Comprehensive Evaluation:** MSE, MAE, QLIKE, Directional Accuracy (We also compare to GARCH, but GARCH is kind of bad. Will add a Kalman filter baseline soon.)
 - **Visualizations:** Prediction plots and metrics for model comparison
 
 ---
@@ -49,6 +51,10 @@ pip install -r requirements.txt
 ## 🚀 How to use
 
 - Prepare your data in `data/` (see `data.py` for details)
+- Generate target variables (e.g., volatility measures) using:
+  ```bash
+  python compare/targets/targets.py
+  ```
 - Train the model:
   ```bash
   python PatchTST/engines/train.py --config PatchTST/default.yaml
@@ -73,11 +79,6 @@ pip install -r requirements.txt
 - Develop custom deep learning models for stochastic processes
 - Explore additional transformer architectures
 - Expand to more financial time series datasets
+- Compare against more advanced models (e.g. Kalman Filters)
 
 ---
-
-## 🔗 Reference
-
-- Related work: https://github.com/OuJiaPeng/Vol-Forecasting-with-DL
-
-**Skills & Tools:** PyTorch · Deep Learning · Machine Learning · Mathematics · Python
