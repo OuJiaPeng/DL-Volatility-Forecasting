@@ -37,7 +37,7 @@ Currently, a PatchTST model is being used to perform vol forecasting for BTC.
 
 Clone this repository:
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/OuJiaPeng/Vol-Forecasting-with-DL
 cd Vol-Forecasting-with-DL
 ```
 
@@ -76,8 +76,8 @@ pip install -r requirements.txt
 
 ## 📝 Future Work
 
-- Develop custom deep learning models for stochastic processes
-- Explore additional transformer architectures
+- Develop custom deep learning models 
+- Explore other transformer architectures
 - Expand to more financial time series datasets
 - Compare against more advanced models (e.g. Kalman Filters)
 
