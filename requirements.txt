@@ -10,3 +10,4 @@ tqdm
 arch
 yaml
 pykalman
+python-dotenv
