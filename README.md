@@ -15,7 +15,7 @@ Currently, a PatchTST model is being used to perform vol forecasting for BTC.
 
 ---
 
-## 🗂 Project Structure
+## Project Structure
 
     Vol-Forecasting-with-DL/
     ├── PatchTST/                      # Model code, configs, and training scripts
