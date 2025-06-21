@@ -9,7 +9,7 @@ Currently, a PatchTST model is being used to perform vol forecasting for BTC.
 ## Features
 - **Transformer-based Volatility Forecasting:** PatchTST for time series
 - **Custom Deep Learning Algorithms:** Ongoing work towards building models from scratch
-- **Comparitive Models: GARCH(1,1), Kalman Filter
+- **Comparitive Models:** GARCH(1,1), Kalman Filter
 - **Comprehensive Evaluation:** MSE, MAE, QLIKE, Directional Accuracy 
 - **Visualizations:** Prediction plots and metrics for model comparison
 
