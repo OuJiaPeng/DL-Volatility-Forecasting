@@ -8,6 +8,19 @@ Working on the multivariate model; The univariate model already performs well.
 
 ---
 
+## Results
+
+- Comparative analysis of PatchTST, GARCH, and Kalman Filter
+- Visualizations: Realized volatility vs. predictions
+
+| Metric    | PatchTST   | GARCH      | Kalman     |
+|-----------|------------|------------|------------|
+| MSE       | 0.000139   | 0.000191   | 0.000173   |
+| MAE       | 0.009365   | 0.011153   | 0.010192   |
+| QLIKE     | -6.27192   | -6.16218   | -6.14855   |
+| DirAcc    | 0.464363   | 0.466523   | 0.339093   |
+---
+
 ## Features
 - **Transformer-based Volatility Forecasting:** PatchTST for time series
 - **Custom Deep Learning Algorithms:** Ongoing work towards building models from scratch
@@ -53,20 +66,6 @@ Working on the multivariate model; The univariate model already performs well.
     ├── README.md                             # Project overview and documentation
     ├── requirements.txt                      # Dependency list
     └── .gitignore                            # Files/directories to ignore in Git
-
----
-
-## Results
-
-- Comparative analysis of PatchTST, GARCH, and Kalman Filter
-- Visualizations: Realized volatility vs. predictions
-
-| Metric    | PatchTST   | GARCH      | Kalman     |
-|-----------|------------|------------|------------|
-| MSE       | 0.000139   | 0.000191   | 0.000173   |
-| MAE       | 0.009365   | 0.011153   | 0.010192   |
-| QLIKE     | -6.27192   | -6.16218   | -6.14855   |
-| DirAcc    | 0.464363   | 0.466523   | 0.339093   |
 
 ---
 
