@@ -10,7 +10,7 @@ Working on the multivariate model; The univariate model already performs well.
 
 ## Results
 
-- Comparative analysis of PatchTST, GARCH, and Kalman Filter
+- Comparative analysis of Univariate PatchTST, GARCH, and Kalman Filter
 - Visualizations: Realized volatility vs. predictions
 
 | Metric    | PatchTST   | GARCH      | Kalman     |
