@@ -1,3 +1,6 @@
+# Default config for univariate PatchTST
+# All paths and settings are for univariate experiments
+
 data:
   csv: compare/targets/with_all_targets.csv
 
@@ -17,6 +20,6 @@ train:
   epochs: 100
   batch_size: 32
   lr: 0.0003
-  ckpt_path: checkpoints/logs/patchtst.pt
-  log_dir: logs
+  ckpt_path: checkpoints/univar/univar_patchtst.pt
+  log_dir: checkpoints/logs/
   resume: false

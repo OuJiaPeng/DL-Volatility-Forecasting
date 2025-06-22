@@ -1,6 +1,5 @@
 # Default config for multivariate PatchTST
-# ...copy from PatchTST/default.yaml and update for multivariate...
-# TODO: Set input channels/features > 1
+# All paths and settings are for multivariate experiments
 
 data:
   csv: compare/targets/with_all_targets.csv
@@ -21,6 +20,6 @@ train:
   epochs: 100
   batch_size: 32
   lr: 0.0003
-  ckpt_path: checkpoints/logs/patchtst.pt
-  log_dir: logs
+  ckpt_path: checkpoints/multivar/multivar_patchtst.pt
+  log_dir: checkpoints/logs/
   resume: false

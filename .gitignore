@@ -13,12 +13,20 @@ ENV/
 .vscode/
 
 # Data, logs, and checkpoints
+data/*.csv
+compare/*.csv
 checkpoints/
 logs/
 *.log
 
+# Allow scripts
+data/data.py
+compare/targets/targets.py
+
 # Outputs
 outputs/patch_preds.npy
+outputs/multivar_outputs/
+!outputs/univar_outputs/
 !outputs/
 !outputs/plot_preds.py
 !outputs/realized_vol_prediction_plot.png
@@ -27,4 +35,9 @@ outputs/patch_preds.npy
 # OS files
 .DS_Store
 Thumbs.db
+
+# Hide all multivar models and outputs
+PatchTST/models/patchtst_multivar.py
+PatchTST/engines/train_multivar.py
+outputs/multivar_outputs/
 
