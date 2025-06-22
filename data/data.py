@@ -4,6 +4,7 @@ import os
 import pandas as pd
 from datetime import datetime
 from eodhd import APIClient
+from dotenv import load_dotenv
 
 def fetch_asset(
     api_key: str,
@@ -43,7 +44,6 @@ def fetch_asset(
     print(f"Saved {symbol} daily to {out_path}")
 
 if __name__ == '__main__':
-    from dotenv import load_dotenv
     load_dotenv()
     api_key = os.getenv("EODHD_API_KEY")
     assert api_key, "Please set EODHD_API_KEY in your environment"
