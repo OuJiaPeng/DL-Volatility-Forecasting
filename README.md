@@ -63,9 +63,9 @@ Working on the multivariate model; The univariate model already performs well.
     │   ├── plot_preds_univar.py
     │   └── realized_vol_prediction_plot.png
     │
-    ├── README.md                             # Project overview and documentation
-    ├── requirements.txt                      # Dependency list
-    └── .gitignore                            # Files/directories to ignore in Git
+    ├── README.md
+    ├── requirements.txt
+    └── .gitignore
 
 ---
 
