@@ -43,4 +43,4 @@ Thumbs.db
 # Hide all multivar models and engines
 PatchTST/models/patchtst_multivar.py
 PatchTST/engines/train_multivar.py
-
+PatchTST/default_multivar.yaml
