@@ -13,15 +13,19 @@ ENV/
 .vscode/
 
 # Data, logs, and checkpoints
-data/*.csv
-compare/*.csv
 checkpoints/
 logs/
 *.log
 
-# Allow scripts
-data/data.py
-compare/targets/targets.py
+# Data folder: hide CSVs, keep data.py
+data/*.csv
+!data/
+!data/data.py
+
+# Compare/targets: hide CSVs, keep targets.py
+compare/targets/*.csv
+!compare/targets/
+!compare/targets/targets.py
 
 # Outputs
 outputs/patch_preds.npy
@@ -36,8 +40,7 @@ outputs/multivar_outputs/
 .DS_Store
 Thumbs.db
 
-# Hide all multivar models and outputs
+# Hide all multivar models and engines
 PatchTST/models/patchtst_multivar.py
 PatchTST/engines/train_multivar.py
-outputs/multivar_outputs/
 
