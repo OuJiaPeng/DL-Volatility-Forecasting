@@ -110,31 +110,20 @@ for model, preds in model_preds.items():
         'DIRACC': diracc(actual_aligned, preds)
     }
 
-# Last-Step Metrics
-last_metrics = {}
+# Last-Step predictions for plotting
 actual_last_step = actual_aligned[:, -1]
 patch_last_step = patch_preds[:, -1]
 garch_rolling_last_step = garch_preds_rolling[:, -1]
 kalman_rolling_last_step = kalman_preds_rolling[:, -1]
 garch_full_last_step = garch_full_aligned[:, -1]
 kalman_full_last_step = kalman_full_aligned[:, -1]
-for model, preds in model_preds.items():
-    last = preds[:, -1]
-    last_metrics[model] = {
-        'MSE': mean_squared_error(actual_last_step, last),
-        'MAE': mean_absolute_error(actual_last_step, last),
-        'QLIKE': qlike(actual_last_step, last),
-        'DIRACC': diracc(actual_last_step, last)
-    }
+
 
 # Print and save metrics 
 full_df = pd.DataFrame(full_metrics).T[['MSE', 'MAE', 'QLIKE', 'DIRACC']]
-last_df = pd.DataFrame(last_metrics).T[['MSE', 'MAE', 'QLIKE', 'DIRACC']]
 
 print("\n=== Model Comparison Metrics (Full Horizon, All Steps) ===")
 print(full_df.to_string(float_format=lambda x: f"{x:.6f}"))
-print("\n=== Model Comparison Metrics (Last Step Only) ===")
-print(last_df.to_string(float_format=lambda x: f"{x:.6f}"))
 
 # PatchTST MSE CI from run_n_times
 if os.path.exists(MSE_OUT_PATH):
@@ -154,7 +143,7 @@ else:
     print("\nNo patchtst_mses.npy found for PatchTST MSE CI.")
 
 
-# Plot last step forecast
+# Plot forecast
 plt.style.use('seaborn-v0_8-whitegrid')
 plt.figure(figsize=(20, 10))
 
