@@ -30,7 +30,7 @@ class PatchTST(nn.Module):
 
         # Patch embedding: project each patch to embedding space
         if channel_independent:
-            # For univariate, this is always a single Conv1d
+            # for univariate, this is always a single Conv1d
             self.patch_proj = nn.Conv1d(1, emb_dim, kernel_size=patch_size, stride=patch_size)
         else:
             self.patch_proj = nn.Conv1d(1, emb_dim, kernel_size=patch_size, stride=patch_size)
@@ -61,9 +61,9 @@ class PatchTST(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (batch, 1, seq_len)
-        # Returns: (batch, out_horizon)
+        # returns: (batch, out_horizon)
         B, C, T = x.shape
-        # Patchify & embed
+        # patchify & embed
         u = self.patch_proj(x)  # (B, emb_dim, n_patches)
         u = u.permute(0, 2, 1) # (B, n_patches, emb_dim)
         u = u + self.pos_embed
