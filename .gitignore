@@ -22,6 +22,6 @@ compare/targets/*.npy
 PatchTST/models/patchtst_multivar.py
 PatchTST/engines/train_multivar.py
 PatchTST/default_multivar.yaml
-outputs/multivar_outputs
+outputs/multivar_outputs/
 PatchTST/utils/default_multivar.yaml
 

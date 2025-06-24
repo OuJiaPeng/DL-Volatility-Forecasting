@@ -1,4 +1,4 @@
-# models/patchtst_univar.py
+# PatchTST/models/patchtst_univar.py
 
 import torch
 import torch.nn as nn

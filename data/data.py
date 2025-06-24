@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 def fetch_asset(
     api_key: str,
-    symbol: str = 'BTC-USD.CC',  # Default to Bitcoin
+    symbol: str = 'BTC-USD.CC',  # Default to Bitcoin; change as you please
     start_date: str = '2014-01-01',
     end_date:   str = None,
     out_path:   str = 'data/btc_2014_now.csv'

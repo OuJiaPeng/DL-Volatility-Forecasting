@@ -9,5 +9,4 @@ eodhd
 tqdm
 arch
 yaml
-pykalman
-python-dotenv
+filterpy

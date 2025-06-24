@@ -172,7 +172,7 @@ plt.plot(pred_dates[plot_slice], garch_rolling_last_step[plot_slice], linestyle=
 plt.plot(pred_dates[plot_slice], kalman_full_last_step[plot_slice], linestyle=':', label="Kalman (Full Window)", color="#9125c4")
 plt.plot(pred_dates[plot_slice], kalman_rolling_last_step[plot_slice], linestyle='--', label="Kalman (Rolling)", color="#9125c4")
 
-plt.title(f"Last-Step ({HORIZON}-Day Ahead) Volatility Forecast Comparison", fontsize=16)
+plt.title(f"Full test ({HORIZON}-Day Ahead) Volatility Forecast Comparison", fontsize=16)
 plt.xlabel("Date", fontsize=12)
 plt.ylabel("Volatility", fontsize=12)
 plt.legend(loc='best', fontsize=11)
