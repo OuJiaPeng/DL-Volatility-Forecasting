@@ -12,6 +12,8 @@ Working on the multivariate model; The univariate model already performs well.
 
 The univariate PatchTST model, using an ensemble of 30 runs, demonstrates superior performance against both full-window and rolling GARCH and Kalman filter benchmarks. The metrics below are for the full test horizon.
 
+For reference, the average realized volatility over the test set was 0.0243
+
 | Metric    | PatchTST (Ensemble) | GARCH (Full) | GARCH (Rolling) | Kalman (Full) | Kalman (Rolling) |
 |-----------|---------------------|--------------|-----------------|---------------|------------------|
 | MSE       | 0.000106            | 0.000175     | 0.000196        | 0.000163      | 0.000232         |

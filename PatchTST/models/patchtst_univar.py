@@ -3,11 +3,9 @@
 import torch
 import torch.nn as nn
 
+# Univariate PatchTST model
 class PatchTST(nn.Module):
-    """
-    Univariate PatchTST: Transformer model for univariate time series forecasting.
-    Only supports in_channels=1 (univariate input).
-    """
+
     def __init__(
         self,
         in_channels: int,
@@ -62,10 +60,8 @@ class PatchTST(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        x: (batch, 1, seq_len)
-        Returns: (batch, out_horizon)
-        """
+        # x: (batch, 1, seq_len)
+        # Returns: (batch, out_horizon)
         B, C, T = x.shape
         # Patchify & embed
         u = self.patch_proj(x)  # (B, emb_dim, n_patches)

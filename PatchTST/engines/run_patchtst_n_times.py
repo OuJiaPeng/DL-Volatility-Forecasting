@@ -6,10 +6,10 @@ import re
 import os
 
 N_RUNS = 30
-MSE_OUT_PATH = "./outputs/univar_outputs/patchtst_mses.npy"
-ALL_PRED_PATH = "./outputs/univar_outputs/patch_preds_univar_all.npy"
-MEAN_PRED_PATH = "./outputs/univar_outputs/patch_preds_univar_mean.npy"
-PRED_PATH = "./outputs/univar_outputs/patch_preds_univar.npy"
+MSE_OUT_PATH = "./outputs/univar_outputs/patchtst_preds/patchtst_mses.npy"
+ALL_PRED_PATH = "./outputs/univar_outputs/patchtst_preds/patch_preds_univar_all.npy"
+MEAN_PRED_PATH = "./outputs/univar_outputs/patchtst_preds/patch_preds_univar_mean.npy"
+PRED_PATH = "./outputs/univar_outputs/patchtst_preds/patch_preds_univar.npy"
 
 def run_experiment():
     # Run train_univar.py as a subprocess and capture its output

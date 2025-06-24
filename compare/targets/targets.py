@@ -7,7 +7,7 @@ from tqdm.auto import tqdm
 import os
 from pykalman import KalmanFilter
 
-# sample variance and log transform
+# Sample variance and log transform
 def compute_logvar_target(returns: np.ndarray, window: int) -> np.ndarray:
     return np.array([
         np.log(returns[i+1:i+1+window].var(ddof=1) + 1e-8)
@@ -15,7 +15,7 @@ def compute_logvar_target(returns: np.ndarray, window: int) -> np.ndarray:
         for i in range(len(returns))
     ])
 
-# sample std dev
+# Sample std dev
 def compute_rolling_std(returns: np.ndarray, window: int) -> np.ndarray:
     return np.array([
         returns[i+1:i+1+window].std(ddof=1)
@@ -47,7 +47,7 @@ def compute_garch_target(returns: np.ndarray, verbose: bool=False) -> pd.Series:
     return pd.Series(garch_forecast)
 
 # Kalman filter for volatility estimation (random walk model)
-# # Model: observed returns ~ N(0, volatility), volatility follows random walk
+# Model: observed returns ~ N(0, volatility), volatility follows random walk
 def compute_kalman_vol(returns: np.ndarray, verbose: bool = True) -> np.ndarray:
 
     kf = KalmanFilter(transition_matrices=[1],
@@ -56,12 +56,13 @@ def compute_kalman_vol(returns: np.ndarray, verbose: bool = True) -> np.ndarray:
                       initial_state_covariance=1,
                       observation_covariance=1,
                       transition_covariance=0.01)
-    # Use squared returns as proxy for variance
+    
+    # use squared returns as proxy for variance
     observations = returns**2
     n_timesteps = len(observations)
     state_means = np.zeros(n_timesteps)
 
-    # Manually iterate through observations to use tqdm
+    # iterate through observations to use tqdm
     filtered_state_mean = kf.initial_state_mean
     filtered_state_covariance = kf.initial_state_covariance
 
@@ -75,7 +76,8 @@ def compute_kalman_vol(returns: np.ndarray, verbose: bool = True) -> np.ndarray:
 
     return np.sqrt(np.maximum(state_means.flatten(), 0))
 
-
+# Rolling forecast GARCH(1,1)
+# fits a GARCH model on the preceding `rolling_window` of returns and forecasts `horizon` steps ahead
 def compute_garch_rolling_forecast(
     returns: np.ndarray,
     horizon: int,
@@ -83,11 +85,7 @@ def compute_garch_rolling_forecast(
     test_indices: np.ndarray,
     verbose: bool = True
 ) -> np.ndarray:
-    """
-    Computes rolling GARCH(1,1) forecasts.
-    For each test index, it fits a GARCH model on the preceding `rolling_window`
-    of returns and forecasts `horizon` steps ahead.
-    """
+
     all_forecasts = []
     for i in tqdm(test_indices, disable=not verbose, desc="Rolling GARCH"):
         train_returns = returns[i - rolling_window : i]
@@ -106,7 +104,8 @@ def compute_garch_rolling_forecast(
 
     return np.array(all_forecasts)
 
-
+# Rolling forecast Kalman filter
+# uses the last state as the forecast for all future steps
 def compute_kalman_rolling_forecast(
     returns: np.ndarray,
     horizon: int,
@@ -114,11 +113,7 @@ def compute_kalman_rolling_forecast(
     test_indices: np.ndarray,
     verbose: bool = True
 ) -> np.ndarray:
-    """
-    Computes rolling Kalman filter volatility forecasts.
-    For each test index, it runs the filter on the preceding `rolling_window`
-    and uses the last state as the forecast for all future steps.
-    """
+
     all_forecasts = []
     for i in tqdm(test_indices, disable=not verbose, desc="Rolling Kalman"):
         window_returns = returns[i - rolling_window : i]
@@ -155,10 +150,9 @@ def generate_all_targets(df: pd.DataFrame, window: int, out_dir: str):
     garch_series = compute_garch_target(returns, verbose=True)
     garch_series.index = df.index
     df['target_garch']  = garch_series
-    # Kalman filter volatility
     df['target_kalman'] = compute_kalman_vol(returns, verbose=True)
 
-    # Save with all targets
+    # save with all targets
     df.to_csv(os.path.join(out_dir, 'with_all_targets.csv'))
     print(f"Saved all targets to {os.path.join(out_dir, 'with_all_targets.csv')}")
     df[['target_logvar']].dropna().to_csv(f"{out_dir}/logvar.csv")
@@ -174,7 +168,8 @@ if __name__ == '__main__':
     parser.add_argument('--csv', type=str, default='data/btc_2014_now.csv')
     parser.add_argument('--window', type=int, default=5, help="Window for realized vol targets.")
     parser.add_argument('--out_dir', type=str, default='compare/targets')
-    # New arguments for rolling forecasts
+
+    # new arguments for rolling forecasts
     parser.add_argument('--skip_rolling', action='store_true', help="Skip rolling GARCH/Kalman forecasts.")
     parser.add_argument('--horizon', type=int, default=5, help="Forecast horizon for rolling models.")
     parser.add_argument('--rolling_window', type=int, default=100, help="Lookback window for rolling models.")
@@ -198,7 +193,7 @@ if __name__ == '__main__':
             raise KeyError(f"Test start date '{args.test_start}' not found in the data index.")
         test_indices = np.arange(test_start_idx, len(df))
 
-        # Compute and save rolling GARCH
+        # compute and save rolling GARCH
         garch_rolling = compute_garch_rolling_forecast(
             returns, args.horizon, args.rolling_window, test_indices
         )
@@ -206,7 +201,7 @@ if __name__ == '__main__':
         np.save(garch_path, garch_rolling)
         print(f"Saved rolling GARCH forecasts to {garch_path}")
 
-        # Compute and save rolling Kalman
+        # compute and save rolling Kalman
         kalman_rolling = compute_kalman_rolling_forecast(
             returns, args.horizon, args.rolling_window, test_indices
         )

@@ -1,7 +1,5 @@
-"""
-Plot and evaluate univariate PatchTST predictions vs. GARCH and Kalman targets.
-Saves metrics and plot to outputs/univar_outputs/.
-"""
+#outputs/univar_outputs/plot_preds_univar.py
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,12 +8,9 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 import os
 import sys
 
-# Add parent directory to sys.path for module imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from PatchTST.utils.config import get_config
 
-
-# ========== CONFIGURATION ==========
 # Load config to get horizon and seq_len
 cfg = get_config('./PatchTST/utils/default_univar.yaml')
 CSV_PATH    = "./compare/targets/with_all_targets.csv"
@@ -36,7 +31,7 @@ METRICS_OUT_PATH = './outputs/univar_outputs/metrics_comparison.csv'
 MEAN_PRED_PATH = "./outputs/univar_outputs/patchtst_preds/patch_preds_univar_mean.npy"
 MSE_OUT_PATH = "./outputs/univar_outputs/patchtst_preds/patchtst_mses.npy"
 
-# ========== LOAD DATA ==========
+# Load data
 df = pd.read_csv(CSV_PATH, parse_dates=['date'], index_col='date').sort_index()
 if TARGET_COL not in df.columns:
     raise ValueError(f"Missing {TARGET_COL}")
@@ -44,7 +39,7 @@ if GARCH_FULL_COL not in df.columns or KALMAN_FULL_COL not in df.columns:
     raise ValueError(f"Missing full-window benchmark columns ('{GARCH_FULL_COL}', '{KALMAN_FULL_COL}') in {CSV_PATH}")
 
 
-# ========== LOAD PREDICTIONS ==========
+# Load predictions
 try:
     # Prefer the mean prediction if it exists
     if os.path.exists(MEAN_PRED_PATH):
@@ -63,7 +58,7 @@ if patch_preds.ndim == 1: patch_preds = patch_preds.reshape(-1, HORIZON)
 if garch_preds_rolling.ndim == 1: garch_preds_rolling = garch_preds_rolling.reshape(-1, HORIZON)
 if kalman_preds_rolling.ndim == 1: kalman_preds_rolling = kalman_preds_rolling.reshape(-1, HORIZON)
 
-# === ALIGN GROUND TRUTH AND PREDICTIONS ===
+# Align predictions and actuals
 test_start = pd.Timestamp("2024-01-01")
 test_df = df.loc[df.index >= test_start].copy() # Use .copy() to avoid SettingWithCopyWarning
 
@@ -88,7 +83,7 @@ kalman_full_aligned = kalman_full_windows[SEQ_LEN : SEQ_LEN + min_len]
 # Get dates for plotting (corresponds to the last day of the forecast)
 pred_dates = test_df.index[SEQ_LEN + HORIZON - 1 : SEQ_LEN + HORIZON - 1 + min_len]
 
-# === METRICS CALCULATION ===
+# Metric calculations
 def qlike(y_true, y_pred):
     eps = 1e-8
     return np.mean(np.log(y_pred**2 + eps) + (y_true**2) / (y_pred**2 + eps))
@@ -132,7 +127,7 @@ for model, preds in model_preds.items():
         'DIRACC': diracc(actual_last_step, last)
     }
 
-# Print and save metrics in the requested format
+# Print and save metrics 
 full_df = pd.DataFrame(full_metrics).T[['MSE', 'MAE', 'QLIKE', 'DIRACC']]
 last_df = pd.DataFrame(last_metrics).T[['MSE', 'MAE', 'QLIKE', 'DIRACC']]
 
@@ -159,7 +154,7 @@ else:
     print("\nNo patchtst_mses.npy found for PatchTST MSE CI.")
 
 
-# === PLOT LAST-STEP FORECASTS ===
+# Plot last step forecast
 plt.style.use('seaborn-v0_8-whitegrid')
 plt.figure(figsize=(20, 10))
 

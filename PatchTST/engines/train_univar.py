@@ -2,7 +2,6 @@
 
 import os
 import sys
-# add parent directory to sys.path for module imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import argparse
@@ -21,7 +20,7 @@ from models.patchtst_univar import PatchTST
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
 
-# dataset for slicing time series into input / output pairs
+# Dataset for slicing time series into input / output pairs
 class SliceDataset(Dataset):
     def __init__(self, series: np.ndarray, seq_len: int, horizon: int):
         self.series = series.astype('float32')
@@ -36,7 +35,7 @@ class SliceDataset(Dataset):
         y = self.series[idx + self.seq_len : idx + self.seq_len + self.horizon]
         return torch.from_numpy(x).unsqueeze(0), torch.from_numpy(y)
 
-# training function
+# Training function
 def train():
     # parse
     parser = argparse.ArgumentParser()
@@ -53,7 +52,7 @@ def train():
     # load data
     df = pd.read_csv(args.csv, parse_dates=['date'], index_col='date').sort_index()
 
-    # split data into train/val/test first
+    # split data into train/val/test
     seq_len, horizon = cfg.model.seq_len, cfg.model.out_horizon
     train_df = df.loc['2014-01-01':'2022-12-31'].copy()
     val_df   = df.loc['2023-01-01':'2023-12-31'].copy()
@@ -69,12 +68,12 @@ def train():
     train_mean = train_df[args.target_col].mean()
     train_std  = train_df[args.target_col].std()
 
-    # normalize all splits with the training set's statistics
+    # normalize all splits with the training set statistics
     train_df[args.target_col] = (train_df[args.target_col] - train_mean) / train_std
     val_df[args.target_col]   = (val_df[args.target_col] - train_mean) / train_std
     test_df[args.target_col]  = (test_df[args.target_col] - train_mean) / train_std
     
-    # Store raw test targets for later evaluation
+    # store raw test targets for later evaluation
     raw_test_targets = test_df[args.target_col] * train_std + train_mean
 
     # create datasets
@@ -100,11 +99,11 @@ def train():
     writer = SummaryWriter(log_dir=log_dir)
     os.makedirs(log_dir, exist_ok=True)
 
-    # Ensure output directory exists for univar outputs
+    # ensure output directory exists for univar outputs
     output_dir = 'outputs/univar_outputs/patchtst_preds'
     os.makedirs(output_dir, exist_ok=True)
 
-    # Ensure checkpoint directory exists for univar checkpoints
+    # ensure checkpoint directory exists for univar checkpoints
     checkpoint_dir = 'checkpoints/univar'
     os.makedirs(checkpoint_dir, exist_ok=True)
 
@@ -153,7 +152,8 @@ def train():
                 break
 
     # test loop; generate predictions on test set
-    # Load best model for test
+
+    # load best model for test
     model.load_state_dict(torch.load(os.path.join(checkpoint_dir, 'univar_patchtst.pt')))
     model.eval()
     all_preds = []
@@ -168,20 +168,23 @@ def train():
 
     # calculate real-vol MSE (all steps in window)
     raw = raw_test_targets.values
-    # The first prediction corresponds to the window starting at seq_len
+
+    # first prediction corresponds to the window starting at seq_len
     true_windows = sliding_window_view(raw, window_shape=horizon)[seq_len : seq_len + len(preds)]
     real_mse = ((true_windows - preds_unscaled)**2).mean()
-    print(f"Real-vol MSE (all steps): {real_mse:.5e}")
+    print(f"Real vol MSE (all steps): {real_mse:.5e}")
 
     # calculate last-step MSE (to match plotting script)
-    # Align last-step predictions with actuals
+
+    # align last-step predictions with actuals
     last_step_preds = preds_unscaled[:, -1]
-    # The first last-step prediction corresponds to the target at index (seq_len + horizon - 1)
+
+    # the first last-step prediction corresponds to the target at index (seq_len + horizon - 1)
     last_step_actuals = raw[seq_len + horizon - 1 : seq_len + horizon - 1 + len(last_step_preds)]
     last_step_mse = ((last_step_actuals - last_step_preds) ** 2).mean()
-    print(f"Last-step MSE: {last_step_mse:.5e}")
+    print(f"Last step MSE: {last_step_mse:.5e}")
 
-    # Save predictions (univariate only)
+    # save predictions (univariate only)
     np.save(os.path.join(output_dir, 'patch_preds_univar.npy'), preds_unscaled)
 
 if __name__ == '__main__':
