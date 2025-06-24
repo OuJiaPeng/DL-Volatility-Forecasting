@@ -21,16 +21,6 @@ For reference, the average realized volatility over the test set was 0.0243
 | QLIKE     | -6.326726           | -6.219139    | -6.160537       | -6.194408     | -6.004205        |
 | DirAcc    | 0.594681            | 0.495213     | 0.492021        | 0.335638      | 0.000000         |
 
-**Last Step Only:**
-
-| Metric    | PatchTST (Ensemble) | GARCH (Full) | GARCH (Rolling) | Kalman (Full) | Kalman (Rolling) |
-|-----------|---------------------|--------------|-----------------|---------------|------------------|
-| MSE       | 0.000159            | 0.000175     | 0.000192        | 0.000163      | 0.000232         |
-| MAE       | 0.009662            | 0.010567     | 0.010694        | 0.009918      | 0.011794         |
-| QLIKE     | -6.218504           | -6.230716    | -6.183242       | -6.207954     | -6.032302        |
-| DirAcc    | 0.424307            | 0.496802     | 0.511727        | 0.336887      | 0.501066         |
-
-
 **Note on Kalman (Rolling) DirAcc:** The 0% directional accuracy for the rolling Kalman filter is due to its simplistic forecast, which predicts a constant volatility over the entire horizon, thus never matching the direction of change.
 
 **Note on Ensembling:** Due to the stochastic nature of DL training, we ensure the results are statistically signicant and robust, thus the PatchTST metrics are calculated from the mean prediction of 30 independent model runs. 
