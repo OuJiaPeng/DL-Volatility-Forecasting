@@ -49,6 +49,7 @@ The univariate PatchTST model, using an ensemble of 30 runs, demonstrates superi
 
 ## Project Structure
 
+```
 Volatility Forecasting with Deep Learning/
 ├── checkpoints/
 │   ├── logs/
@@ -70,11 +71,13 @@ Volatility Forecasting with Deep Learning/
 │   ├── engines/
 │   ├── models/
 │   └── utils/
+│       ├── config.py
 │       └── default_univar.yaml
 │
 ├── .gitignore
 ├── README.md
 └── requirements.txt
+```
 ---
 
 ## Data
