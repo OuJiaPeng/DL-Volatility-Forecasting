@@ -1,46 +1,27 @@
-# Byte-compiled files
+# Python generated files
 __pycache__/
-*.py[cod]
+*.pyc
 
-# Environment files
-.env
-.venv/
-env/
-venv/
-ENV/
-
-# VS Code settings
-.vscode/
-
-# Data, logs, and checkpoints
+# Checkpoints and logs
 checkpoints/
-logs/
 *.log
+*.tfevents.*
 
-# Data folder: hide CSVs, keep data.py
+# Visually useless outputs
+outputs/univar_outputs/patchtst_preds
+
+# Explarotory
+Exploratory/
+
+# Data
 data/*.csv
-!data/
-!data/data.py
-
-# Compare/targets: hide CSVs, keep targets.py
 compare/targets/*.csv
-!compare/targets/
-!compare/targets/targets.py
+compare/targets/*.npy
 
-# Outputs
-outputs/patch_preds.npy
-outputs/multivar_outputs/
-!outputs/univar_outputs/
-!outputs/
-!outputs/plot_preds.py
-!outputs/realized_vol_prediction_plot.png
-!outputs/metrics_patch_vs_garch.csv
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Hide all multivar models and engines
+# Multivar models
 PatchTST/models/patchtst_multivar.py
 PatchTST/engines/train_multivar.py
 PatchTST/default_multivar.yaml
+PatchTST/outputs/multivar/
+
+

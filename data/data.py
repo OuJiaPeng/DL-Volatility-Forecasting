@@ -2,6 +2,7 @@
 
 import os
 import pandas as pd
+import numpy as np
 from datetime import datetime
 from eodhd import APIClient
 from dotenv import load_dotenv
@@ -36,7 +37,7 @@ def fetch_asset(
     df.sort_index(inplace=True)
 
     # compute daily returns
-    df['return'] = df['adjusted_close'].pct_change().fillna(0)
+    df['return'] = np.log(df['adjusted_close']).diff().fillna(0)
 
     out_df = df[['adjusted_close', 'return']]
     os.makedirs(os.path.dirname(out_path), exist_ok=True)

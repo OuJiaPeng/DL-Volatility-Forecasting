@@ -40,7 +40,7 @@ class SliceDataset(Dataset):
 def train():
     # parse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default='PatchTST/default_univar.yaml')
+    parser.add_argument('--config', type=str, default='PatchTST/utils/default_univar.yaml')
     parser.add_argument('--target_col', type=str, default='target_std')
     parser.add_argument('--csv', type=str, default='compare/targets/with_all_targets.csv')
     args = parser.parse_args()
@@ -50,19 +50,32 @@ def train():
     cfg = get_config(args.config)
     cfg.train.lr = float(cfg.train.lr)
 
-    # load and normalize data
+    # load data
     df = pd.read_csv(args.csv, parse_dates=['date'], index_col='date').sort_index()
-    raw_target = df[args.target_col].copy()
-    mean, std = raw_target.mean(), raw_target.std()
-    df[args.target_col] = (raw_target - mean) / std
-    df = df.dropna(subset=[args.target_col])
 
-    # split data into train/val/test
+    # split data into train/val/test first
     seq_len, horizon = cfg.model.seq_len, cfg.model.out_horizon
-    train_df = df['2014-01-01':'2022-12-31']
-    val_df   = df['2023-01-01':'2023-12-31']
+    train_df = df.loc['2014-01-01':'2022-12-31'].copy()
+    val_df   = df.loc['2023-01-01':'2023-12-31'].copy()
     today    = datetime.today().strftime('%Y-%m-%d')
-    test_df  = df['2024-01-01': today]
+    test_df  = df.loc['2024-01-01': today].copy()
+
+    # drop NaNs from each split independently
+    train_df.dropna(subset=[args.target_col], inplace=True)
+    val_df.dropna(subset=[args.target_col], inplace=True)
+    test_df.dropna(subset=[args.target_col], inplace=True)
+
+    # calculate mean and std on the training set only
+    train_mean = train_df[args.target_col].mean()
+    train_std  = train_df[args.target_col].std()
+
+    # normalize all splits with the training set's statistics
+    train_df[args.target_col] = (train_df[args.target_col] - train_mean) / train_std
+    val_df[args.target_col]   = (val_df[args.target_col] - train_mean) / train_std
+    test_df[args.target_col]  = (test_df[args.target_col] - train_mean) / train_std
+    
+    # Store raw test targets for later evaluation
+    raw_test_targets = test_df[args.target_col] * train_std + train_mean
 
     # create datasets
     train_ds = SliceDataset(train_df[args.target_col].values, seq_len, horizon)
@@ -88,7 +101,7 @@ def train():
     os.makedirs(log_dir, exist_ok=True)
 
     # Ensure output directory exists for univar outputs
-    output_dir = 'outputs/univar_outputs'
+    output_dir = 'outputs/univar_outputs/patchtst_preds'
     os.makedirs(output_dir, exist_ok=True)
 
     # Ensure checkpoint directory exists for univar checkpoints
@@ -151,18 +164,20 @@ def train():
             all_preds.append(p.cpu().numpy())
 
     preds = np.concatenate(all_preds, axis=0)
-    preds_unscaled = preds * std + mean
+    preds_unscaled = preds * train_std + train_mean
 
     # calculate real-vol MSE (all steps in window)
-    raw = raw_target.loc[test_df.index].values
-    windows = sliding_window_view(raw, window_shape=horizon)[:len(preds)]
-    real_mse = ((windows - preds_unscaled)**2).mean()
+    raw = raw_test_targets.values
+    # The first prediction corresponds to the window starting at seq_len
+    true_windows = sliding_window_view(raw, window_shape=horizon)[seq_len : seq_len + len(preds)]
+    real_mse = ((true_windows - preds_unscaled)**2).mean()
     print(f"Real-vol MSE (all steps): {real_mse:.5e}")
 
     # calculate last-step MSE (to match plotting script)
     # Align last-step predictions with actuals
     last_step_preds = preds_unscaled[:, -1]
-    last_step_actuals = raw[-len(last_step_preds):]
+    # The first last-step prediction corresponds to the target at index (seq_len + horizon - 1)
+    last_step_actuals = raw[seq_len + horizon - 1 : seq_len + horizon - 1 + len(last_step_preds)]
     last_step_mse = ((last_step_actuals - last_step_preds) ** 2).mean()
     print(f"Last-step MSE: {last_step_mse:.5e}")
 
