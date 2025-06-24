@@ -26,7 +26,6 @@ For reference, the average realized volatility over the test set was 0.0243
 **Note on Ensembling:** Due to the stochastic nature of DL training, we ensure the results are statistically signicant and robust, thus the PatchTST metrics are calculated from the mean prediction of 30 independent model runs. 
 
 - PatchTST MSE (all steps, 30 runs): 0.000109 (95% CI: 0.000108, 0.000110)
-- Plot saved to `./outputs/univar_outputs/realized_vol_prediction_plot.png`
 
 ---
 
