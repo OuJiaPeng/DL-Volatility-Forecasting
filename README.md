@@ -1,6 +1,6 @@
-# Volatility Forecasting with Deep Learning
+# Financial Volatility Forecasting with Deep Learning
 
-This project explores deep learning for stochastic process modeling and volatility forecasting. The main goal is to implement and evaluate transformer-based models for this task.
+This project explores deep learning for volatility forecasting. The main goal is to implement and evaluate transformer-based models for this task.
 
 Currently, a PatchTST model is being used to perform volatility forecasting for BTC-USD daily prices. The project includes a full pipeline for data processing, training, evaluation, and comparison against classical benchmarks like GARCH and Kalman filters.
 
