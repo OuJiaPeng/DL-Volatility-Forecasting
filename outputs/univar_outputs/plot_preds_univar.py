@@ -118,12 +118,30 @@ kalman_rolling_last_step = kalman_preds_rolling[:, -1]
 garch_full_last_step = garch_full_aligned[:, -1]
 kalman_full_last_step = kalman_full_aligned[:, -1]
 
+# Last-Step Metrics
+last_metrics = {}
+for model, preds in model_preds.items():
+    preds_last_step = preds[:, -1]
+    last_metrics[model] = {
+        'MSE': mean_squared_error(actual_last_step, preds_last_step),
+        'MAE': mean_absolute_error(actual_last_step, preds_last_step),
+        'QLIKE': qlike(actual_last_step, preds_last_step),
+        'DIRACC': diracc(actual_last_step, preds_last_step)
+    }
 
 # Print and save metrics 
 full_df = pd.DataFrame(full_metrics).T[['MSE', 'MAE', 'QLIKE', 'DIRACC']]
+last_df = pd.DataFrame(last_metrics).T[['MSE', 'MAE', 'QLIKE', 'DIRACC']]
 
 print("\n=== Model Comparison Metrics (Full Horizon, All Steps) ===")
 print(full_df.to_string(float_format=lambda x: f"{x:.6f}"))
+
+# Save both metrics to a single CSV with section headers
+with open(METRICS_OUT_PATH, 'w') as f:
+    f.write('=== Model Comparison Metrics (Full Horizon, All Steps) ===\n')
+    full_df.to_csv(f, float_format="%.6f")
+    f.write('\n=== Model Comparison Metrics (Last Step Only) ===\n')
+    last_df.to_csv(f, float_format="%.6f")
 
 # PatchTST MSE CI from run_n_times
 if os.path.exists(MSE_OUT_PATH):
