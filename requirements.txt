@@ -1,12 +1,30 @@
-pandas
-numpy
-matplotlib
-scikit-learn
-torch
-tensorboard
-python-dotenv
-eodhd
-tqdm
-arch
-yaml
-filterpy
+# Volatility Forecasting with PatchTST
+# Python >= 3.10
+
+# Core ML
+torch>=2.0
+
+# Data & numerics
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+scikit-learn>=1.2
+
+# Visualisation
+matplotlib>=3.7
+tensorboard>=2.12
+
+# Time-series baselines
+arch>=6.0
+pykalman>=0.9
+filterpy>=1.4
+
+# Data fetching (only needed to rebuild raw data)
+eodhd>=1.0
+python-dotenv>=1.0
+
+# Config
+pyyaml>=6.0
+
+# Misc
+tqdm>=4.64

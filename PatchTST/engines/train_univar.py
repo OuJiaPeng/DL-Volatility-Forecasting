@@ -1,5 +1,12 @@
-# PatchTST/engines/train_univar.py
+"""Single-run PatchTST training and evaluation.
 
+Trains a univariate PatchTST model on realised-volatility targets,
+evaluates on the held-out test period, and saves predictions to
+outputs/univar_outputs/patchtst_preds/.
+
+Usage:
+    python PatchTST/engines/train_univar.py [--config PATH] [--target_col COL]
+"""
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

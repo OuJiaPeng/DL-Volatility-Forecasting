@@ -1,3 +1,8 @@
+"""YAML configuration loader.
+
+Converts a YAML file into a nested SimpleNamespace for
+dot-notation access (e.g. cfg.model.seq_len).
+"""
 import os
 import yaml
 from types import SimpleNamespace

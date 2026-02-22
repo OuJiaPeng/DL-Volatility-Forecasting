@@ -1,9 +1,14 @@
-# PatchTST/models/patchtst_univar.py
+"""Univariate PatchTST model for time-series forecasting.
 
+Architecture:
+    Input → Conv1d patch embedding → positional encoding
+    → N-layer transformer encoder → global average pool
+    → LayerNorm → MLP head → forecast horizon output.
+"""
 import torch
 import torch.nn as nn
 
-# Univariate PatchTST model
+
 class PatchTST(nn.Module):
 
     def __init__(

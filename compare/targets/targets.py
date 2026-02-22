@@ -1,5 +1,12 @@
-# compare/targets.py
+"""Benchmark target generation for volatility forecasting.
 
+Computes realised-volatility targets (rolling std, log-var, EWMA)
+and classical model forecasts (GARCH(1,1), Kalman filter) in both
+full-window and rolling-window variants.
+
+Usage:
+    python compare/targets/targets.py [--csv PATH] [--window 5]
+"""
 import numpy as np
 import pandas as pd
 from arch import arch_model

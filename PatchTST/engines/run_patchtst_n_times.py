@@ -1,5 +1,12 @@
-# PatchTST/engines/run_patchtst_n_times.py
+"""30-run PatchTST ensemble driver.
 
+Runs train_univar.py N_RUNS times, collects per-run MSEs,
+computes mean prediction and 95 % confidence interval, and
+saves ensemble outputs to outputs/univar_outputs/patchtst_preds/.
+
+Usage:
+    python PatchTST/engines/run_patchtst_n_times.py
+"""
 import numpy as np
 from scipy import stats
 import subprocess

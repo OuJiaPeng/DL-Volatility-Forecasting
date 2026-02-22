@@ -1,5 +1,11 @@
-#data/data.py
+"""EODHD data fetcher for daily BTC-USD prices.
 
+Downloads adjusted-close data and computes log returns.
+Requires EODHD_API_KEY in a .env file or environment variable.
+
+Usage:
+    python data/data.py
+"""
 import os
 import pandas as pd
 import numpy as np

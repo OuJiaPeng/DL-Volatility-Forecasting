@@ -1,5 +1,12 @@
-#outputs/univar_outputs/plot_preds_univar.py
+"""Comparison plot and metrics for PatchTST vs GARCH / Kalman baselines.
 
+Loads ensemble (or single-run) PatchTST predictions alongside rolling
+and full-window GARCH and Kalman forecasts, computes MSE / MAE / QLIKE /
+directional accuracy, and saves a forecast overlay plot.
+
+Usage:
+    python outputs/univar_outputs/plot_preds_univar.py
+"""
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

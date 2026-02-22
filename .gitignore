@@ -1,4 +1,4 @@
-# Python generated files
+# Python
 __pycache__/
 *.pyc
 
@@ -7,21 +7,18 @@ checkpoints/
 *.log
 *.tfevents.*
 
-# Visually useless outputs
-outputs/univar_outputs/patchtst_preds
+# Intermediate prediction arrays
+outputs/univar_outputs/patchtst_preds/
 
-# Explarotory
+# Exploratory notebooks / scratch
 Exploratory/
 
-# Data
+# Data (large CSVs / numpy arrays)
 data/*.csv
 compare/targets/*.csv
 compare/targets/*.npy
 
-# Multivar models
-PatchTST/models/patchtst_multivar.py
-PatchTST/engines/train_multivar.py
-PatchTST/default_multivar.yaml
-outputs/multivar_outputs/
-PatchTST/utils/default_multivar.yaml
+# OS
+.DS_Store
+Thumbs.db
 
