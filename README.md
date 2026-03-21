@@ -64,21 +64,21 @@ Average realised volatility over the test set: **0.0243**.
 ├── data/                       # Raw data & fetcher
 │   ├── data.py                 #   EODHD API download script
 │   └── btc_2014_now.csv        #   Daily BTC prices (gitignored)
-├── compare/
-│   └── targets/                # Benchmark target generation
-│       └── targets.py          #   GARCH, Kalman, EWMA, rolling-std targets
+├── baselines/                  # Benchmark target generation
+│   ├── targets.py              #   GARCH, Kalman, EWMA, rolling-std targets
+│   └── with_all_targets.csv    #   Combined targets file
 ├── PatchTST/                   # Model implementation
 │   ├── models/
 │   │   └── patchtst_univar.py  #   Univariate PatchTST architecture
 │   ├── engines/
 │   │   ├── train_univar.py     #   Single-run training & evaluation
 │   │   └── run_patchtst_n_times.py  # 30-run ensemble driver
+│   ├── evaluate/
+│   │   └── plot_preds_univar.py  # Comparison metrics & plot
 │   └── utils/
 │       ├── config.py           #   YAML config loader
 │       └── default_univar.yaml #   Hyperparameters
-├── outputs/
-│   └── univar_outputs/         # Metrics CSV, prediction plot
-│       └── plot_preds_univar.py  # Plotting & metrics script
+├── outputs/                    # Metrics CSV, prediction plot
 ├── Makefile
 ├── requirements.txt
 └── README.md

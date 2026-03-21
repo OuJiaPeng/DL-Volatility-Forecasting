@@ -2,7 +2,7 @@
 # All paths and settings are for univariate experiments
 
 data:
-  csv: compare/targets/with_all_targets.csv
+  csv: baselines/with_all_targets.csv
 
 model:
   in_channels: 1

@@ -10,11 +10,11 @@ ensemble:
 
 # Generate targets and baselines (GARCH, Kalman, EWMA, rolling-std)
 targets:
-	python compare/targets/targets.py
+	python baselines/targets.py
 
 # Generate comparison plot and metrics table
 plot:
-	python outputs/univar_outputs/plot_preds_univar.py
+	python PatchTST/evaluate/plot_preds_univar.py
 
 # Remove caches and temporary files
 clean:

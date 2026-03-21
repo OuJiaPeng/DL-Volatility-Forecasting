@@ -5,7 +5,7 @@ and full-window GARCH and Kalman forecasts, computes MSE / MAE / QLIKE /
 directional accuracy, and saves a forecast overlay plot.
 
 Usage:
-    python outputs/univar_outputs/plot_preds_univar.py
+    python PatchTST/evaluate/plot_preds_univar.py
 """
 import pandas as pd
 import numpy as np
@@ -20,23 +20,23 @@ from PatchTST.utils.config import get_config
 
 # Load config to get horizon and seq_len
 cfg = get_config('./PatchTST/utils/default_univar.yaml')
-CSV_PATH    = "./compare/targets/with_all_targets.csv"
+CSV_PATH    = "./baselines/with_all_targets.csv"
 TARGET_COL  = "target_std"
 GARCH_FULL_COL = "target_garch"
 KALMAN_FULL_COL = "target_kalman"
 HORIZON     = cfg.model.out_horizon
 SEQ_LEN     = cfg.model.seq_len
 # Prediction paths
-PATCH_PRED_PATH   = "./outputs/univar_outputs/patchtst_preds/patch_preds_univar.npy"
-GARCH_ROLL_PATH = "./compare/targets/garch_rolling.npy"
-KALMAN_ROLL_PATH= "./compare/targets/kalman_rolling.npy"
+PATCH_PRED_PATH   = "./outputs/patchtst_preds/patch_preds_univar.npy"
+GARCH_ROLL_PATH = "./baselines/garch_rolling.npy"
+KALMAN_ROLL_PATH= "./baselines/kalman_rolling.npy"
 # Output paths
-OUTPUT_PLOT = "./outputs/univar_outputs/realized_vol_prediction_plot.png"
+OUTPUT_PLOT = "./outputs/realized_vol_prediction_plot.png"
 PLOT_WINDOW = None  # Show full test window if None
-METRICS_OUT_PATH = './outputs/univar_outputs/metrics_comparison.csv'
+METRICS_OUT_PATH = './outputs/metrics_comparison.csv'
 # Try to use mean prediction from run_n_times if available
-MEAN_PRED_PATH = "./outputs/univar_outputs/patchtst_preds/patch_preds_univar_mean.npy"
-MSE_OUT_PATH = "./outputs/univar_outputs/patchtst_preds/patchtst_mses.npy"
+MEAN_PRED_PATH = "./outputs/patchtst_preds/patch_preds_univar_mean.npy"
+MSE_OUT_PATH = "./outputs/patchtst_preds/patchtst_mses.npy"
 
 # Load data
 df = pd.read_csv(CSV_PATH, parse_dates=['date'], index_col='date').sort_index()
@@ -58,7 +58,7 @@ try:
     garch_preds_rolling = np.load(GARCH_ROLL_PATH)
     kalman_preds_rolling = np.load(KALMAN_ROLL_PATH)
 except FileNotFoundError as e:
-    raise FileNotFoundError(f"Missing prediction file: {e}. Please run training and `compare/targets/targets.py`.")
+    raise FileNotFoundError(f"Missing prediction file: {e}. Please run training and `baselines/targets.py`.")
 
 # Ensure predictions are 2D
 if patch_preds.ndim == 1: patch_preds = patch_preds.reshape(-1, HORIZON)

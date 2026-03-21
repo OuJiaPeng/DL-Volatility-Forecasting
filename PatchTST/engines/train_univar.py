@@ -2,7 +2,7 @@
 
 Trains a univariate PatchTST model on realised-volatility targets,
 evaluates on the held-out test period, and saves predictions to
-outputs/univar_outputs/patchtst_preds/.
+outputs/patchtst_preds/.
 
 Usage:
     python PatchTST/engines/train_univar.py [--config PATH] [--target_col COL]
@@ -48,7 +48,7 @@ def train():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, default='PatchTST/utils/default_univar.yaml')
     parser.add_argument('--target_col', type=str, default='target_std')
-    parser.add_argument('--csv', type=str, default='compare/targets/with_all_targets.csv')
+    parser.add_argument('--csv', type=str, default='baselines/with_all_targets.csv')
     args = parser.parse_args()
 
     # sets device and loads config
@@ -107,7 +107,7 @@ def train():
     os.makedirs(log_dir, exist_ok=True)
 
     # ensure output directory exists for univar outputs
-    output_dir = 'outputs/univar_outputs/patchtst_preds'
+    output_dir = 'outputs/patchtst_preds'
     os.makedirs(output_dir, exist_ok=True)
 
     # ensure checkpoint directory exists for univar checkpoints

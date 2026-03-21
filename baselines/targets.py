@@ -5,7 +5,7 @@ and classical model forecasts (GARCH(1,1), Kalman filter) in both
 full-window and rolling-window variants.
 
 Usage:
-    python compare/targets/targets.py [--csv PATH] [--window 5]
+    python baselines/targets.py [--csv PATH] [--window 5]
 """
 import numpy as np
 import pandas as pd
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--csv', type=str, default='data/btc_2014_now.csv')
     parser.add_argument('--window', type=int, default=5, help="Window for realized vol targets.")
-    parser.add_argument('--out_dir', type=str, default='compare/targets')
+    parser.add_argument('--out_dir', type=str, default='baselines')
 
     # new arguments for rolling forecasts
     parser.add_argument('--skip_rolling', action='store_true', help="Skip rolling GARCH/Kalman forecasts.")

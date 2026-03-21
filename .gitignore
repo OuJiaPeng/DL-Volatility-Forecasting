@@ -8,17 +8,17 @@ checkpoints/
 *.tfevents.*
 
 # Intermediate prediction arrays
-outputs/univar_outputs/patchtst_preds/
+outputs/patchtst_preds/
 
 # Exploratory notebooks / scratch
 Exploratory/
 
 # Data (large CSVs / numpy arrays)
 data/*.csv
-compare/targets/*.csv
-compare/targets/*.npy
+baselines/*.csv
+baselines/*.npy
+!baselines/with_all_targets.csv
 
 # OS
 .DS_Store
 Thumbs.db
-
