@@ -2,6 +2,10 @@
 
 > 30-model PatchTST ensemble achieving **35 % MSE reduction** over GARCH / Kalman baselines on BTC 5-day forward realised volatility (directional accuracy 0.60 vs 0.49).
 
+Volatility estimates from this module feed downstream execution systems (see
+[RL-Optimal-Liquidation](https://github.com/OuJiaPeng/RL-Optimal-Liquidation)) where
+σ̂ is an input to the agent's trading policy.
+
 ---
 
 ## Results
@@ -90,8 +94,8 @@ Average realised volatility over the test set: **0.0243**.
 
 ```bash
 # 1. Clone & install
-git clone https://github.com/OuJiaPeng/Vol-Forecasting-with-DL.git
-cd Vol-Forecasting-with-DL
+git clone https://github.com/OuJiaPeng/DL-Volatility-Forecasting.git
+cd DL-Volatility-Forecasting
 pip install -r requirements.txt
 
 # 2. Generate targets & baselines (requires data/btc_2014_now.csv)
@@ -116,7 +120,3 @@ All model hyperparameters are in [`PatchTST/utils/default_univar.yaml`](PatchTST
 ## License
 
 MIT
-- Expand to multivariate forecasting, incorporating additional features.
-- Test on more financial time series datasets.
-
----
