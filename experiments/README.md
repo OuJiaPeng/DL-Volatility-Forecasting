@@ -14,13 +14,13 @@ The main story is in the top-level [README](../README.md); this is the technical
    A model that can't beat naive-IV out-of-sample is reported as adding nothing.
 3. **Add only what the diagnostics license, then re-check the oracle.** Baseline → oracle →
    add-what-loads → re-oracle, until dry.
-4. **Honest evaluation.** Walk-forward folds with purge/embargo; standardize on train only;
+4. **Evaluation.** Walk-forward folds with purge/embargo; standardize on train only;
    selection on validation; test read once, at the end. QLIKE primary; Diebold–Mariano with
    HAC lag for significance. Every run appended to `ledger.csv`.
 
-Amendment learned the hard way: run the oracle as a **gate between rungs, not once at the
-end** — the daily SPX campaign burned ~10 full-panel neural arms a post-hariv_x oracle would
-have predicted dead.
+One adjustment from experience: run the oracle as a gate between rungs, not once at the end.
+The daily SPX run went through about 10 full-panel neural arms that a post-hariv_x oracle would
+have flagged as dead beforehand.
 
 ## Results by arena
 
@@ -39,13 +39,14 @@ have predicted dead.
 (+0.012, +0.027 at 8 folds) that ridge missed. Localized to 14:00 FOMC blocks (~2.9× normal
 vol), the open, and the close; named as clock × IV-premium / FOMC × clock interactions and
 encoded as ~50 explicit linear terms → MSE **0.0640**, beating GBT in every fold, gate
-re-closed against ridge, GBT, and within-window shape features. A better *classical* model,
-found by the discipline. (Caveat for any headline: interaction terms were designed while
-seeing all folds; confirm on a fresh fold before publishing the exact +7%.)
+re-closed against ridge, GBT, and within-window shape features. It's a better classical model,
+and it came out of the protocol rather than a bigger network. (Caveat for any headline:
+interaction terms were designed while seeing all folds; confirm on a fresh fold before
+publishing the exact +7%.)
 
-**Thesis:** every predictable piece of vol has a name — persistence, premium,
-state-dependence, event clock — and once named, a few linear coefficients beat any capacity
-model approximating it.
+Across arenas, the predictable structure — persistence, premium, state dependence, event clock
+— was captured by a few linear coefficients, and larger models approximating the same thing
+did worse.
 
 ## Codas (not central — moved to `archive/codas/`)
 
@@ -56,7 +57,8 @@ Kept for the record, out of the active surface. See [`archive/codas/`](../archiv
   in mean or scale.
 - **Deep hedging**: 917 real 1-day SPXW straddle episodes, hedged with ES. A neural policy that
   nests the Whalley–Wilmott no-trade band matches it and no more (paired t < 1.2 at every cost);
-  the landscape near the classical optimum is flat. Lesson: parametrization beats capacity.
+  the landscape near the classical optimum is flat. The network only kept up once it was
+  parametrized to start from WW.
 - **HF microstructure pilot**: 24 ES sessions, `bbo-1s`+`ohlcv-1s`. Total RV is
   persistence-saturated (R² 0.92–0.96), L1 book adds ~nothing; a faint, unstable jump-share
   signal is the only thread. Seed of the next (impact-forecasting) project, in its own repo.

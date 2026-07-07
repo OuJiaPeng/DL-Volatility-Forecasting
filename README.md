@@ -1,119 +1,111 @@
-# volforecast — can ML beat classical models at forecasting volatility?
+# volforecast
 
-Short answer, after beating on it for a while: **no, not on data you can buy off the shelf.**
-The long answer is the interesting part, and it's honest — every negative result here is a
-real test, not a strawman. Two genuinely new things did fall out along the way (below).
+Realized-volatility forecasting for SPX and NVDA options, set up to test one question: can a
+neural net beat classical HAR-type models at forecasting RV? Across a range of data filtrations
+and horizons the answer came out no, at least not with data you can buy off the shelf. Two useful
+results came out of it anyway; they're near the bottom.
 
-This is a leakage-safe rebuild of an older project. The rules were simple: build the data so
-look-ahead bugs are *impossible*, always establish the forecasting ceiling *before* touching a
-model, and never let a fancy model win by beating a weak baseline.
+It's a rebuild of an older project that had look-ahead bugs (P.S. below). The rebuild separates
+features and targets by a single decision timestamp, uses one alignment path for the whole
+dataset, and measures the forecasting ceiling before any model is fit, so those bugs can't recur.
 
 ## The problem
 
-Forecast future realized volatility (RV) of an asset from what you know today. Concretely: given
-everything up to the close, predict RV over the next 1 / 5 / 10 / 21 sessions (and later, the next
-5 / 15 / 30 minutes). Score with **QLIKE**, the metric that's actually robust when your target is a
-noisy vol proxy. The whole point was to see whether a transformer / neural net could beat the
-classical econometric models (HAR and friends) that have owned this problem for 20 years.
+Predict future realized volatility (RV) from what's known today: given everything up to the close,
+forecast RV over the next 1 / 5 / 10 / 21 sessions (and later the next 5 / 15 / 30 minutes). Scoring
+is QLIKE, which stays well-behaved when the target is a noisy vol proxy. The point was to see
+whether a transformer or other neural net could beat HAR and its variants.
 
 ## The data
 
-- **Universe:** SPX and NVDA options + underlying. (Picked index first, then a single volatile
-  name to check whether "crowded" markets were the reason things kept failing. They weren't.)
-- **Vendor:** Databento — raw options quotes (`SPX.OPT`/`SPXW.OPT`, `NVDA.OPT`) + ES/NVDA minute
-  bars. No vendor ships trustworthy *historical* implied vol, so we solve it ourselves from raw
-  quotes: parity-implied forward → Black-76 inversion → tenor-matched ATM IV, skew, term slope.
-- **Coverage:** ~1,400 SPX sessions and ~1,150 NVDA sessions, 2021–2026. Every remote pull is
-  cached to parquet, so the API spend was one-time (and small — the whole thing ran on a free key).
+- **Universe:** SPX and NVDA options plus the underlying. Index first, then a single volatile name
+  to check whether "crowded" markets were the reason things kept failing. They weren't.
+- **Vendor:** Databento — raw options quotes (`SPX.OPT`/`SPXW.OPT`, `NVDA.OPT`) plus ES/NVDA minute
+  bars. No vendor ships trustworthy historical implied vol, so we solve it from raw quotes:
+  parity-implied forward, Black-76 inversion, then tenor-matched ATM IV, skew, and term slope.
+- **Coverage:** ~1,400 SPX sessions and ~1,150 NVDA sessions, 2021–2026. Every pull is cached to
+  parquet, so the API spend was one-time and small (it ran on a free key).
 
-## Data structure & the baby-analysis version of what we found
+## The short version of what we found
 
-Strip away the machinery and here's the picture:
+- Volatility is very persistent. Today's RV is most of tomorrow's, so a baseline that ignores this
+  is too weak to be a fair comparison, and models that look good often just rediscover it.
+- Implied vol is already a forecast — the market's. Once IV is in the feature set, the only thing
+  left to predict is its bias (the variance risk premium), and that bias is close to linear in logs.
+  About six ridge coefficients capture it.
+- So the ceiling is low. We checked directly by regressing the best model's out-of-sample errors on
+  every available feature, with both linear models and trees. Out-of-sample R² came back ≤ 0 almost
+  everywhere, which says the information is used up rather than the model being too small.
 
-- **Volatility is extremely persistent.** Today's RV is most of tomorrow's RV. Any baseline that
-  ignores this is a strawman; any model that "wins" mostly just rediscovers it.
-- **Implied vol is a forecast — the market's forecast.** The option surface is the capital-weighted
-  view of every professional vol desk, using everything public plus their own flow. The moment you
-  put IV in your feature set, your only remaining edge is correcting its *bias* — the variance risk
-  premium — and that bias turned out to be **linear in logs**. About six ridge coefficients capture
-  it. There's nothing left for a big model to learn.
-- **So the ceiling is low and the market sets it.** We measured this directly with an "oracle": regress
-  the champion's out-of-sample errors on *every* feature we have, linear and trees. Out-of-sample R²
-  came back **≤ 0** almost everywhere. That's the tell that the information is exhausted — not that the
-  model is too small.
+## Classical baselines
 
-## Classical baselines (the bar to clear)
+The bar was set with real baselines, not toy ones:
 
-Not toy baselines — the real ones:
+- **HAR-RV** (Corsi): daily / weekly / monthly trailing RV.
+- **HAR-IV / HAR-X:** HAR plus the implied-vol term structure.
+- **hariv_x:** HAR-IV plus a state-dependent premium term (IV × VIX). This was the best model on
+  SPX, five or six coefficients, and nothing beat it.
+- Also run: persistence/EWMA, GARCH(1,1), and naive-IV (use the market's IV as the forecast).
+  naive-IV is the check that matters most: a model that can't beat it isn't adding anything.
 
-- **HAR-RV** (Corsi): daily/weekly/monthly trailing RV. The 20-year champion.
-- **HAR-IV / HAR-X:** HAR plus the implied-vol term structure. This is the honest bar.
-- **hariv_x:** HAR-IV plus a state-dependent premium (IV × VIX interaction). **This was the SPX
-  champion** — 5–6 coefficients, and nothing beat it.
-- Also ran: persistence/EWMA, GARCH(1,1), and **naive-IV** ("just quote the market's number"),
-  which is the single most important sanity check — if your model can't beat naive-IV, it's adding
-  nothing.
-
-## We beat it to death — every filtration × horizon we could think of
+## We beat it to death across filtrations and horizons
 
 | What we tried | Result |
 |---|---|
 | Daily RV from RV history | HAR wins |
 | Daily RV from RV + IV | HAR-IV / hariv_x wins; the IV bias is linear |
-| Daily RV from **IV only** (the premium problem) | bias-corrected IV is the best rung; curves & trees *hurt* |
-| Forecasting **IV itself** | long tenors ≈ martingale (persistence is the ceiling); short tenor has a small, *linear* event-cycle wrinkle |
-| **0DTE** terminal 15 min (1,133 sessions) | the closing straddle is efficient; gate closed |
-| **Intraday** next-30-min RV (16k origins) | see discoveries below |
-| NVDA, every one of the above | same conclusions; just noisier |
+| Daily RV from IV only (the premium problem) | bias-corrected IV is the best rung; curves and trees hurt |
+| Forecasting IV itself | long tenors ≈ martingale (persistence is the ceiling); short tenor has a small, linear event-cycle wrinkle |
+| 0DTE terminal 15 min (1,133 sessions) | the closing straddle is efficient; gate closed |
+| Intraday next-30-min RV (16k origins) | see below |
+| NVDA, every one of the above | same conclusions, just noisier |
 
-Every arena ran the same protocol: oracle/ceiling first → strong non-strawman baseline → add only
-what the diagnostics license → re-check the oracle → stop when it's dry.
+Each one ran the same protocol: measure the ceiling with the oracle, fit a strong baseline, add
+only the features the diagnostics justify, re-check the oracle, stop when nothing's left.
 
-## ML didn't work (and *why*, which is the useful part)
+## Why ML didn't help
 
-Seven neural architectures on the full SPX panel (iTransformer, LSTM, TCN, linear controls, a
-surface-attention model, and more) — **all lost to a 6-coefficient ridge.** Not by noise; by the
-kind of margin that says "wrong tool." The reason is the same everywhere:
+Seven neural architectures on the full SPX panel (iTransformer, LSTM, TCN, a surface-attention
+model, linear controls, and others) all lost to the six-coefficient ridge, and not by a small
+margin. The reason was the same each time. Forecast error splits into approximation, estimation,
+information gap, and irreducible noise. A neural net only helps with the first, and that part was
+already small here because the structure is simple once you know what it is. What actually bound us
+was the information gap (the market had already priced it) and estimation error (~1,400 days, heavily
+autocorrelated, is only a few hundred effective samples — too few to justify a big model). No
+architecture changes either of those.
 
-> Forecast error = *approximation* + *estimation* + *information gap* + *irreducible noise*.
-> A neural net only fixes the first term. Ours was already ~zero (the structure is simple once
-> named). The binding constraints were the **information gap** (the market already priced it) and
-> **estimation** (≈1,400 autocorrelated days is a few hundred effective samples — too few to pay
-> for a big model's variance). No architecture touches either.
+The pattern held across the whole project: wherever there was predictable structure — persistence,
+the risk premium, state dependence, the intraday event clock — a handful of linear coefficients
+captured it, and a larger model approximating the same thing did worse.
 
-**The one-liner the whole project converged to:** *every predictable piece of volatility has a name*
-— persistence, risk premium, state-dependence, the event clock — *and once you name it, a handful
-of linear coefficients beats any capacity model trying to approximate it.* The market is the model.
+## Two things that did work
 
-## The two things that *did* work
-
-Because it wasn't all negative:
-
-1. **An intraday "event-clock" model.** On next-30-min RV, an oracle gate actually *opened* — trees
-   found structure a linear model missed. We localized it (FOMC 2pm blocks run ~3× normal vol; also
-   the open and the close), **named it** as clock × IV-premium interactions, and encoded it as ~50
-   explicit linear terms. That beat the trees in every fold (+7% over diurnal-HAR+IV) and re-closed
-   the gate. A better *classical* model, discovered by the discipline — not a neural win, but real.
-2. **A dated empirical finding:** the ultra-short 0DTE straddle premium that existed in 2022–2024
-   has **compressed to zero / slightly inverted in 2025–2026**, exactly as systematic 0DTE selling
-   got crowded. Nobody in the literature has this era yet.
+1. **An intraday event-clock model.** Forecasting next-30-min RV, the oracle gate opened for once:
+   trees found structure the linear model had missed. It localized to specific times — the 2pm FOMC
+   block runs about 3× normal vol, plus the open and the close. Writing those as explicit interaction
+   terms (clock × IV-premium), about 50 of them, beat the trees in every fold, roughly 7% better than
+   diurnal HAR+IV, and closed the gate again. It's a better classical model rather than a neural win,
+   but it came straight out of following the protocol.
+2. **A dated empirical result.** The very-short-dated 0DTE straddle premium that was there in
+   2022–2024 has compressed to about zero (slightly negative) in 2025–2026, around the time
+   systematic 0DTE selling got crowded. I haven't seen this period documented elsewhere.
 
 ## What's in here
 
 ```
-volforecast/     the leakage-safe package (this is the reusable part)
-  timeutil.py      point-in-time guards — look-ahead is impossible by construction
-  panel.py         THE single alignment path (feat_* | tgt_* | meta_*, indexed by t0)
-  splits.py        walk-forward folds with purge/embargo at every boundary
-  data/            Databento adapter + volsolve.py (IV from raw quotes) + a synthetic vendor
+volforecast/     the leakage-safe package
+  timeutil.py      point-in-time guards (features <= t0 < targets)
+  panel.py         the single alignment path (feat_* | tgt_* | meta_*, indexed by t0)
+  splits.py        walk-forward folds with purge/embargo
+  data/            Databento adapter, volsolve.py (IV from raw quotes), synthetic vendor
   features/        HAR, realized RV, IV surface, intraday structure, forward-only targets
-  models/          the HAR-prior + residual-trunk hybrid and the trunks that lost, honestly
+  models/          HAR-prior + residual-trunk hybrid, and the trunks that didn't beat it
   eval/            QLIKE, pinball, HAC Diebold–Mariano, walk-forward runner
-scripts/         the core chapters as runnable scripts (oracle, iv_only, study_0dte, intraday_oracle, pulls)
-experiments/     lab notebook: README = protocol + results, ledger.csv = every run
-tests/           the no-lookahead suite + solver round-trips — the guarantees, automated
-configs/         default.yaml (synthetic, no data needed) | spx.yaml | nvda.yaml
-archive/codas/   side-studies, not the core result (distributional, deep-hedging, HF pilot)
+scripts/         core chapters (oracle, iv_only, study_0dte, intraday_oracle, data pulls)
+experiments/     protocol notes + ledger.csv (every run)
+tests/           no-lookahead suite and solver round-trips
+configs/         default.yaml (synthetic) | spx.yaml | nvda.yaml
+archive/codas/   side-studies (distributional, deep-hedging, HF pilot)
 archive/legacy/  the original project (see the P.S.)
 ```
 
@@ -121,29 +113,29 @@ archive/legacy/  the original project (see the P.S.)
 
 ```bash
 pip install -e ".[dev]"
-make test        # full suite incl. the no-lookahead invariants — runs on synthetic data, no API key
+make test        # full suite incl. the no-lookahead invariants; runs on synthetic data, no API key
 make all         # build panel -> baselines -> comparison table (synthetic)
 ```
 
 Real data needs `pip install -e ".[databento]"` and `DATABENTO_API_KEY` (a `.env` works). Pulls are
-cached; price any pull first with `metadata.get_cost`. `python scripts/status.py` shows cache/ledger
-state at a glance.
+cached; price any pull first with `metadata.get_cost`. `python scripts/status.py` shows cache and
+ledger state.
 
-## Where it goes next
+## Next
 
-The one live thread is **microstructure**: total RV is saturated by persistence, but there's a faint,
-unstable signal in *jumps* from order flow, and the natural pivot is forecasting a **market-impact /
-liquidity parameter** (Kyle's λ, or a GLFT market-making parameter) instead of vol — because unlike
-vol, the market publishes no "impact surface" for you to lose to. That's a new project, in its own repo.
+The remaining thread is microstructure. Total RV is saturated by persistence, but there's a weak,
+unstable signal in the jump component from order flow. The plan is to forecast a market-impact or
+liquidity parameter (Kyle's λ, or a GLFT market-making parameter) instead of volatility, since
+there's no quoted "impact surface" the way there is an IV surface. That's a separate project in its
+own repo.
 
 ## P.S.
 
-This started life as a BTC realized-vol forecaster (PatchTST + a pile of baselines). An audit found
-two structural look-ahead bugs — a forward-looking target reused as a model input, and two alignment
-paths that had silently drifted 60 rows apart. Both are the kind of leak that quietly makes results
-look great and mean nothing. Rather than patch them, the project was rebuilt from scratch so that
-class of bug is impossible by construction. The old code is frozen in [`archive/legacy/`](archive/legacy/)
-as a reminder of why the point-in-time discipline exists.
+This began as a BTC realized-vol forecaster (PatchTST plus a set of baselines). An audit found two
+look-ahead bugs: a forward-looking target that was also fed in as an input, and two alignment code
+paths that had drifted 60 rows apart. Both make results look better than they are. Rather than patch
+them, the project was rebuilt so that kind of bug can't recur. The old code is in
+[`archive/legacy/`](archive/legacy/).
 
 ---
 
