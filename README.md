@@ -109,10 +109,11 @@ volforecast/     the leakage-safe package (this is the reusable part)
   features/        HAR, realized RV, IV surface, intraday structure, forward-only targets
   models/          the HAR-prior + residual-trunk hybrid and the trunks that lost, honestly
   eval/            QLIKE, pinball, HAC Diebold–Mariano, walk-forward runner
-scripts/         the chapters as runnable scripts (oracle, iv_only, study_0dte, intraday_*, pulls)
+scripts/         the core chapters as runnable scripts (oracle, iv_only, study_0dte, intraday_oracle, pulls)
 experiments/     lab notebook: README = protocol + results, ledger.csv = every run
 tests/           the no-lookahead suite + solver round-trips — the guarantees, automated
 configs/         default.yaml (synthetic, no data needed) | spx.yaml | nvda.yaml
+archive/codas/   side-studies, not the core result (distributional, deep-hedging, HF pilot)
 archive/legacy/  the original project (see the P.S.)
 ```
 

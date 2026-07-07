@@ -47,19 +47,19 @@ seeing all folds; confirm on a fresh fold before publishing the exact +7%.)
 state-dependence, event clock — and once named, a few linear coefficients beat any capacity
 model approximating it.
 
-## Codas (not central, kept for the record)
+## Codas (not central — moved to `archive/codas/`)
 
-- **Distributional** (`intraday_dist.py`): the champion's residual *scale* is also
-  unpredictable (ridge & GBT ≈ 0); a constant-σ Gaussian beats GBT- and NN-quantile heads on
-  pinball and coverage. Nothing left in mean or scale.
-- **Deep hedging** (`build_hedge_episodes.py`, `hedge_study.py`): 917 real 1-day SPXW
-  straddle episodes, hedged with ES. A neural policy that nests the Whalley–Wilmott no-trade
-  band matches it and no more (paired t < 1.2 at every cost); the policy landscape near the
-  classical optimum is flat. Lesson: parametrization beats capacity.
-- **HF microstructure pilot** (`hf_lob_pilot.py`): 24 ES sessions, `bbo-1s`+`ohlcv-1s`.
-  Total RV is persistence-saturated (R² 0.92–0.96), L1 book adds ~nothing; a faint, unstable
-  jump-share signal is the only thread. This is the seed of the next (impact-forecasting)
-  project, which moves to its own repo.
+Kept for the record, out of the active surface. See [`archive/codas/`](../archive/codas/).
+
+- **Distributional**: the champion's residual *scale* is also unpredictable (ridge & GBT ≈ 0);
+  a constant-σ Gaussian beats GBT- and NN-quantile heads on pinball and coverage. Nothing left
+  in mean or scale.
+- **Deep hedging**: 917 real 1-day SPXW straddle episodes, hedged with ES. A neural policy that
+  nests the Whalley–Wilmott no-trade band matches it and no more (paired t < 1.2 at every cost);
+  the landscape near the classical optimum is flat. Lesson: parametrization beats capacity.
+- **HF microstructure pilot**: 24 ES sessions, `bbo-1s`+`ohlcv-1s`. Total RV is
+  persistence-saturated (R² 0.92–0.96), L1 book adds ~nothing; a faint, unstable jump-share
+  signal is the only thread. Seed of the next (impact-forecasting) project, in its own repo.
 
 ## Ledger
 

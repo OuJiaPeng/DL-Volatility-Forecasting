@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 from volforecast.intraday import aug_features, day_folds, fit_oos
 
 QS = [0.1, 0.5, 0.9]
