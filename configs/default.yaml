@@ -1,0 +1,41 @@
+# volforecast default config (flat namespace; cfg.start, cfg.horizons, ...)
+
+# data / vendor
+vendor: synthetic           # synthetic | databento | massive
+start: "2018-01-01"
+end:   "2023-12-31"
+seed:  7
+
+# databento (real SPX path; needs DATABENTO_API_KEY and pip install -e ".[databento]")
+databento:
+  es_symbol: "ES.c.0"       # continuous front-month ES for realized vol
+  close_window_minutes: 15  # SPX chain quote window before the close (cost lever: 5 = ~1/3 price)
+  option_roots: ["SPX.OPT", "SPXW.OPT"]  # SPXW carries the weeklies/0DTE — required for short tenors
+
+# panel / calendar
+open_time:  "09:30"
+close_time: "16:00"
+rv_minutes: 5
+horizons: [1, 5, 10, 21]    # forward RV term structure (sessions)
+
+# split (time-ordered + purge/embargo)
+train_frac: 0.6
+val_frac:   0.2
+embargo:    5
+
+# v2 hybrid model (HAR prior + residual transformer; needs torch)
+model:
+  lookback: 30
+  emb_dim: 32
+  n_heads: 4
+  n_layers: 2
+  dropout: 0.1
+  quantiles: [0.1, 0.5, 0.9]
+  lr: 0.001
+  epochs: 60
+  patience: 10
+  batch_size: 64
+  lambda_qlike: 0.1
+  n_runs: 3
+  seed: 7
+  device: cpu

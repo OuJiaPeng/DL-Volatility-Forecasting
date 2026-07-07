@@ -1,22 +1,26 @@
-.PHONY: train ensemble targets plot clean
+.PHONY: install panel baselines eval all test lint
 
-# Train a single PatchTST model
-train:
-	python PatchTST/engines/train_univar.py
+install:
+	pip install -e ".[dev]"
 
-# Run 30-model ensemble (averages predictions across runs)
-ensemble:
-	python PatchTST/engines/run_patchtst_n_times.py
+panel:
+	python -m volforecast.cli panel
 
-# Generate targets and baselines (GARCH, Kalman, EWMA, rolling-std)
-targets:
-	python baselines/targets.py
+baselines eval:
+	python -m volforecast.cli eval
 
-# Generate comparison plot and metrics table
-plot:
-	python PatchTST/evaluate/plot_preds_univar.py
+all:
+	python -m volforecast.cli all
 
-# Remove caches and temporary files
-clean:
-	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+# real SPX data (Databento cache must be pulled first: scripts/pull_spx_history.py)
+spx:
+	python -m volforecast.cli all --config configs/spx.yaml --model
+
+test:
+	pytest -q
+
+lint:
+	ruff check volforecast tests
+
+status:
+	python scripts/status.py

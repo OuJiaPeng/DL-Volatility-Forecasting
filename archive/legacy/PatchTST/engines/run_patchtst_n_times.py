@@ -26,8 +26,10 @@ def run_experiment():
         [sys.executable, 'PatchTST/engines/train_univar.py'],
         capture_output=True, text=True
     )
-    # Look for the 'Real-vol MSE (all steps):' line in stdout
-    match = re.search(r'Real-vol MSE \(all steps\): ([0-9.eE+-]+)', result.stdout)
+    # Look for the 'Real vol MSE (all steps):' line in stdout.
+    # NOTE: train_univar.py prints "Real vol MSE" (space); the old regex used "Real-vol"
+    # (hyphen) and silently never matched, NaN-ing every run. Match both spellings.
+    match = re.search(r'Real[ -]?vol MSE \(all steps\): ([0-9.eE+-]+)', result.stdout)
     if match:
         mse = float(match.group(1))
         return mse

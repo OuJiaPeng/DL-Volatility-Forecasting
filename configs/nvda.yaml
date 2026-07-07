@@ -1,0 +1,41 @@
+# NVDA chapter: the "less crowded, more volatile" hypothesis test.
+# Same recipe as SPX; single root, equity underlying, split-adjusted.
+vendor: databento
+start: "2022-01-03"
+end:   "2026-07-02"
+seed:  7
+
+databento:
+  underlying_dataset: "XNAS.ITCH"
+  underlying_symbol: "NVDA"
+  underlying_stype: "raw_symbol"
+  close_window_minutes: 5
+  option_roots: ["NVDA.OPT"]
+  splits:
+    - {date: "2024-06-10", ratio: 10}   # 10-for-1
+
+open_time:  "09:30"
+close_time: "16:00"
+rv_minutes: 5
+horizons: [1, 5, 10, 21]
+
+train_frac: 0.6
+val_frac:   0.2
+embargo:    5
+
+model:
+  lookback: 30
+  emb_dim: 32
+  n_heads: 4
+  n_layers: 2
+  dropout: 0.1
+  quantiles: [0.1, 0.5, 0.9]
+  lr: 0.001
+  epochs: 60
+  patience: 10
+  batch_size: 64
+  lambda_qlike: 0.1
+  n_runs: 5
+  seed: 7
+  device: cpu
+name: nvda

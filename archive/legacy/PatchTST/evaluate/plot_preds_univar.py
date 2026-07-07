@@ -30,6 +30,9 @@ SEQ_LEN     = cfg.model.seq_len
 PATCH_PRED_PATH   = "./outputs/patchtst_preds/patch_preds_univar.npy"
 GARCH_ROLL_PATH = "./baselines/garch_rolling.npy"
 KALMAN_ROLL_PATH= "./baselines/kalman_rolling.npy"
+HAR_ROLL_PATH   = "./baselines/har_rolling.npy"
+PERSIST_ROLL_PATH = "./baselines/persistence_rolling.npy"
+EWMA_ROLL_PATH  = "./baselines/ewma_rolling.npy"
 # Output paths
 OUTPUT_PLOT = "./outputs/realized_vol_prediction_plot.png"
 PLOT_WINDOW = None  # Show full test window if None
@@ -57,6 +60,9 @@ try:
         patch_preds = np.load(PATCH_PRED_PATH)
     garch_preds_rolling = np.load(GARCH_ROLL_PATH)
     kalman_preds_rolling = np.load(KALMAN_ROLL_PATH)
+    har_preds_rolling = np.load(HAR_ROLL_PATH)
+    persist_preds_rolling = np.load(PERSIST_ROLL_PATH)
+    ewma_preds_rolling = np.load(EWMA_ROLL_PATH)
 except FileNotFoundError as e:
     raise FileNotFoundError(f"Missing prediction file: {e}. Please run training and `baselines/targets.py`.")
 
@@ -64,6 +70,9 @@ except FileNotFoundError as e:
 if patch_preds.ndim == 1: patch_preds = patch_preds.reshape(-1, HORIZON)
 if garch_preds_rolling.ndim == 1: garch_preds_rolling = garch_preds_rolling.reshape(-1, HORIZON)
 if kalman_preds_rolling.ndim == 1: kalman_preds_rolling = kalman_preds_rolling.reshape(-1, HORIZON)
+if har_preds_rolling.ndim == 1: har_preds_rolling = har_preds_rolling.reshape(-1, HORIZON)
+if persist_preds_rolling.ndim == 1: persist_preds_rolling = persist_preds_rolling.reshape(-1, HORIZON)
+if ewma_preds_rolling.ndim == 1: ewma_preds_rolling = ewma_preds_rolling.reshape(-1, HORIZON)
 
 # Align predictions and actuals
 test_start = pd.Timestamp("2024-01-01")
@@ -73,19 +82,41 @@ test_df = df.loc[df.index >= test_start].copy() # Use .copy() to avoid SettingWi
 actual_windows = sliding_window_view(test_df[TARGET_COL], window_shape=HORIZON)
 
 # Create windows for full-window benchmarks
+# TODO(audit #4): target_garch is a 1-step-ahead forecast and target_kalman is a
+# contemporaneous filtered level; sliding-windowing them grades a 1-step/nowcast estimate
+# as a 5-day-ahead forecast (apples-to-oranges vs PatchTST/rolling). To make this an
+# honest horizon-matched comparison, generate true expanding-window horizon-5 forecasts
+# in targets.py instead, or relabel these columns as 1-step / nowcast references.
 garch_full_windows = sliding_window_view(test_df[GARCH_FULL_COL], window_shape=HORIZON)
 kalman_full_windows = sliding_window_view(test_df[KALMAN_FULL_COL], window_shape=HORIZON)
 
-# Truncate all predictions to the shortest length to ensure alignment
-min_len = min(len(patch_preds), len(garch_preds_rolling), len(kalman_preds_rolling), len(actual_windows) - SEQ_LEN)
+# Align every series to a COMMON forecast origin before truncating.
+# PatchTST consumes the first SEQ_LEN test points as input, so patch_preds[0]'s origin is
+# at test-relative position SEQ_LEN; actuals and the Full benchmarks are therefore sliced
+# [SEQ_LEN:].  FIX (audit #1): the rolling-style arrays (GARCH/Kalman/HAR/Persistence/EWMA)
+# are indexed from the FIRST test day, so they MUST also be offset by SEQ_LEN. Previously
+# they were sliced [:min_len], scoring each rolling forecast against realised vol ~SEQ_LEN
+# (=60) trading days in its future.
+rolling_arrays = {
+    'GARCH (Rolling)': garch_preds_rolling,
+    'Kalman (Rolling)': kalman_preds_rolling,
+    'HAR-RV': har_preds_rolling,
+    'Persistence (RW)': persist_preds_rolling,
+    'EWMA': ewma_preds_rolling,
+}
+min_len = min(
+    len(patch_preds),
+    len(actual_windows) - SEQ_LEN,
+    *[len(a) - SEQ_LEN for a in rolling_arrays.values()],
+)
 patch_preds = patch_preds[:min_len]
-garch_preds_rolling = garch_preds_rolling[:min_len]
-kalman_preds_rolling = kalman_preds_rolling[:min_len]
 
 # Align actuals and full-window benchmarks with the predictions (offset by SEQ_LEN)
 actual_aligned = actual_windows[SEQ_LEN : SEQ_LEN + min_len]
 garch_full_aligned = garch_full_windows[SEQ_LEN : SEQ_LEN + min_len]
 kalman_full_aligned = kalman_full_windows[SEQ_LEN : SEQ_LEN + min_len]
+# Rolling-style baselines get the SAME SEQ_LEN offset so all origins coincide.
+rolling_aligned = {name: arr[SEQ_LEN : SEQ_LEN + min_len] for name, arr in rolling_arrays.items()}
 
 # Get dates for plotting (corresponds to the last day of the forecast)
 pred_dates = test_df.index[SEQ_LEN + HORIZON - 1 : SEQ_LEN + HORIZON - 1 + min_len]
@@ -102,9 +133,12 @@ def diracc(y_true, y_pred):
 model_preds = {
     'PatchTST': patch_preds,
     'GARCH (Full)': garch_full_aligned,
-    'GARCH (Rolling)': garch_preds_rolling,
+    'GARCH (Rolling)': rolling_aligned['GARCH (Rolling)'],
     'Kalman (Full)': kalman_full_aligned,
-    'Kalman (Rolling)': kalman_preds_rolling
+    'Kalman (Rolling)': rolling_aligned['Kalman (Rolling)'],
+    'HAR-RV': rolling_aligned['HAR-RV'],
+    'Persistence (RW)': rolling_aligned['Persistence (RW)'],
+    'EWMA': rolling_aligned['EWMA'],
 }
 
 # Full Horizon Metrics
@@ -120,10 +154,13 @@ for model, preds in model_preds.items():
 # Last-Step predictions for plotting
 actual_last_step = actual_aligned[:, -1]
 patch_last_step = patch_preds[:, -1]
-garch_rolling_last_step = garch_preds_rolling[:, -1]
-kalman_rolling_last_step = kalman_preds_rolling[:, -1]
+garch_rolling_last_step = rolling_aligned['GARCH (Rolling)'][:, -1]
+kalman_rolling_last_step = rolling_aligned['Kalman (Rolling)'][:, -1]
 garch_full_last_step = garch_full_aligned[:, -1]
 kalman_full_last_step = kalman_full_aligned[:, -1]
+har_last_step = rolling_aligned['HAR-RV'][:, -1]
+persist_last_step = rolling_aligned['Persistence (RW)'][:, -1]
+ewma_last_step = rolling_aligned['EWMA'][:, -1]
 
 # Last-Step Metrics
 last_metrics = {}
@@ -185,6 +222,9 @@ plt.plot(pred_dates[plot_slice], garch_full_last_step[plot_slice], linestyle=':'
 plt.plot(pred_dates[plot_slice], garch_rolling_last_step[plot_slice], linestyle='--', label="GARCH (Rolling)", color="#229247")
 plt.plot(pred_dates[plot_slice], kalman_full_last_step[plot_slice], linestyle=':', label="Kalman (Full Window)", color="#9125c4")
 plt.plot(pred_dates[plot_slice], kalman_rolling_last_step[plot_slice], linestyle='--', label="Kalman (Rolling)", color="#9125c4")
+plt.plot(pred_dates[plot_slice], har_last_step[plot_slice], linestyle='-.', label="HAR-RV", color="#d62728", linewidth=1.2)
+plt.plot(pred_dates[plot_slice], persist_last_step[plot_slice], linestyle='--', label="Persistence (RW)", color="#7f7f7f", linewidth=1.0)
+plt.plot(pred_dates[plot_slice], ewma_last_step[plot_slice], linestyle=':', label="EWMA", color="#17becf", linewidth=1.0)
 
 plt.title(f"Full test ({HORIZON}-Day Ahead) Volatility Forecast Comparison", fontsize=16)
 plt.xlabel("Date", fontsize=12)

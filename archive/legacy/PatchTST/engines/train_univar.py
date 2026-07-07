@@ -84,6 +84,12 @@ def train():
     raw_test_targets = test_df[args.target_col] * train_std + train_mean
 
     # create datasets
+    # TODO(audit #2): target_col ('target_std') is FORWARD-looking -- std(returns[t+1:t+1+window]).
+    # It is used here as the model INPUT as well as the label, so the last input value encodes
+    # `window` days of returns that occur AFTER the forecast origin (look-ahead the GARCH/Kalman
+    # baselines never get, which unfairly favours PatchTST in the comparison). For an honest,
+    # deployable setup, lag the input series by `window` (or feed a backward-looking realised-vol
+    # feature) and keep target_std only as the label.
     train_ds = SliceDataset(train_df[args.target_col].values, seq_len, horizon)
     val_ds   = SliceDataset(val_df[args.target_col].values, seq_len, horizon)
     test_ds  = SliceDataset(test_df[args.target_col].values, seq_len, horizon)

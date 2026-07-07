@@ -1,23 +1,33 @@
 # Python
 __pycache__/
 *.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# volforecast generated outputs
+artifacts/
+data_cache/
+
+# secrets
+.env
+
+# personal docs (resume, framer notes) — local only
+docs/
+/*.tex
 
 # Checkpoints and logs
 checkpoints/
 *.log
 *.tfevents.*
 
-# Intermediate prediction arrays
-outputs/patchtst_preds/
-
-# Exploratory notebooks / scratch
-Exploratory/
-
-# Data (large CSVs / numpy arrays)
-data/*.csv
-baselines/*.csv
-baselines/*.npy
-!baselines/with_all_targets.csv
+# Legacy project (BTC/PatchTST) — keep the CODE, ignore the heavy data/intermediates
+archive/legacy/outputs/patchtst_preds/
+archive/legacy/Exploratory/
+archive/legacy/data/*.csv
+archive/legacy/baselines/*.csv
+archive/legacy/baselines/*.npy
+!archive/legacy/baselines/with_all_targets.csv
 
 # OS
 .DS_Store

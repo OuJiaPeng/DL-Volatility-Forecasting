@@ -1,122 +1,149 @@
-# Volatility Forecasting with PatchTST
+# volforecast — can ML beat classical models at forecasting volatility?
 
-> 30-model PatchTST ensemble achieving **35 % MSE reduction** over GARCH / Kalman baselines on BTC 5-day forward realised volatility (directional accuracy 0.60 vs 0.49).
+Short answer, after beating on it for a while: **no, not on data you can buy off the shelf.**
+The long answer is the interesting part, and it's honest — every negative result here is a
+real test, not a strawman. Two genuinely new things did fall out along the way (below).
 
-Volatility estimates from this module feed downstream execution systems (see
-[RL-Optimal-Liquidation](https://github.com/OuJiaPeng/RL-Optimal-Liquidation)) where
-σ̂ is an input to the agent's trading policy.
+This is a leakage-safe rebuild of an older project. The rules were simple: build the data so
+look-ahead bugs are *impossible*, always establish the forecasting ceiling *before* touching a
+model, and never let a fancy model win by beating a weak baseline.
 
----
+## The problem
 
-## Results
+Forecast future realized volatility (RV) of an asset from what you know today. Concretely: given
+everything up to the close, predict RV over the next 1 / 5 / 10 / 21 sessions (and later, the next
+5 / 15 / 30 minutes). Score with **QLIKE**, the metric that's actually robust when your target is a
+noisy vol proxy. The whole point was to see whether a transformer / neural net could beat the
+classical econometric models (HAR and friends) that have owned this problem for 20 years.
 
-Average realised volatility over the test set: **0.0243**.
+## The data
 
-| Model | MSE | MAE | QLIKE | Dir. Accuracy |
-|-------|----:|----:|------:|--------------:|
-| **PatchTST (30-run ensemble)** | **0.000106** | **0.007567** | **−6.327** | **0.595** |
-| GARCH (Full) | 0.000175 | 0.010574 | −6.219 | 0.495 |
-| GARCH (Rolling) | 0.000196 | 0.010852 | −6.161 | 0.492 |
-| Kalman (Full) | 0.000163 | 0.009942 | −6.194 | 0.336 |
-| Kalman (Rolling) | 0.000232 | 0.011947 | −6.004 | 0.000 |
+- **Universe:** SPX and NVDA options + underlying. (Picked index first, then a single volatile
+  name to check whether "crowded" markets were the reason things kept failing. They weren't.)
+- **Vendor:** Databento — raw options quotes (`SPX.OPT`/`SPXW.OPT`, `NVDA.OPT`) + ES/NVDA minute
+  bars. No vendor ships trustworthy *historical* implied vol, so we solve it ourselves from raw
+  quotes: parity-implied forward → Black-76 inversion → tenor-matched ATM IV, skew, term slope.
+- **Coverage:** ~1,400 SPX sessions and ~1,150 NVDA sessions, 2021–2026. Every remote pull is
+  cached to parquet, so the API spend was one-time (and small — the whole thing ran on a free key).
 
-- PatchTST MSE (all steps, 30 runs): 0.000109 — 95 % CI: (0.000108, 0.000110)
-- Kalman (Rolling) directional accuracy is 0 % because it predicts a constant volatility over the entire horizon.
+## Data structure & the baby-analysis version of what we found
 
-![Realised volatility prediction plot](https://github.com/user-attachments/assets/ece9eba2-ff37-48c6-be8f-6da406c79d03)
+Strip away the machinery and here's the picture:
 
----
+- **Volatility is extremely persistent.** Today's RV is most of tomorrow's RV. Any baseline that
+  ignores this is a strawman; any model that "wins" mostly just rediscovers it.
+- **Implied vol is a forecast — the market's forecast.** The option surface is the capital-weighted
+  view of every professional vol desk, using everything public plus their own flow. The moment you
+  put IV in your feature set, your only remaining edge is correcting its *bias* — the variance risk
+  premium — and that bias turned out to be **linear in logs**. About six ridge coefficients capture
+  it. There's nothing left for a big model to learn.
+- **So the ceiling is low and the market sets it.** We measured this directly with an "oracle": regress
+  the champion's out-of-sample errors on *every* feature we have, linear and trees. Out-of-sample R²
+  came back **≤ 0** almost everywhere. That's the tell that the information is exhausted — not that the
+  model is too small.
 
-## Methodology
+## Classical baselines (the bar to clear)
 
-### Model
+Not toy baselines — the real ones:
 
-| Component | Detail |
-|-----------|--------|
-| Architecture | PatchTST — channel-independent transformer with patched input embedding |
-| Input | 60-day lookback of 5-day rolling realised volatility (std of log returns) |
-| Output | 5-day ahead realised volatility forecast |
-| Patch size | 12 (5 patches per sequence) |
-| Encoder | 3-layer transformer, 4 heads, 64-dim embeddings, GELU activation |
-| Training | AdamW + OneCycleLR, MSE loss, early stopping (patience 20) |
-| Ensembling | 30 independent runs; predictions averaged to reduce variance |
+- **HAR-RV** (Corsi): daily/weekly/monthly trailing RV. The 20-year champion.
+- **HAR-IV / HAR-X:** HAR plus the implied-vol term structure. This is the honest bar.
+- **hariv_x:** HAR-IV plus a state-dependent premium (IV × VIX interaction). **This was the SPX
+  champion** — 5–6 coefficients, and nothing beat it.
+- Also ran: persistence/EWMA, GARCH(1,1), and **naive-IV** ("just quote the market's number"),
+  which is the single most important sanity check — if your model can't beat naive-IV, it's adding
+  nothing.
 
-### Baselines
+## We beat it to death — every filtration × horizon we could think of
 
-| Baseline | Description |
-|----------|-------------|
-| **GARCH(1,1) — Full** | Fitted on all data up to each prediction point |
-| **GARCH(1,1) — Rolling** | 100-day rolling window, h-step forecast |
-| **Kalman Filter — Full** | Random-walk state-space model on squared returns |
-| **Kalman Filter — Rolling** | 100-day rolling window Kalman |
+| What we tried | Result |
+|---|---|
+| Daily RV from RV history | HAR wins |
+| Daily RV from RV + IV | HAR-IV / hariv_x wins; the IV bias is linear |
+| Daily RV from **IV only** (the premium problem) | bias-corrected IV is the best rung; curves & trees *hurt* |
+| Forecasting **IV itself** | long tenors ≈ martingale (persistence is the ceiling); short tenor has a small, *linear* event-cycle wrinkle |
+| **0DTE** terminal 15 min (1,133 sessions) | the closing straddle is efficient; gate closed |
+| **Intraday** next-30-min RV (16k origins) | see discoveries below |
+| NVDA, every one of the above | same conclusions; just noisier |
 
----
+Every arena ran the same protocol: oracle/ceiling first → strong non-strawman baseline → add only
+what the diagnostics license → re-check the oracle → stop when it's dry.
 
-## Data
+## ML didn't work (and *why*, which is the useful part)
 
-- **Asset**: BTC-USD daily (2014 – present), from EODHD API
-- **Target**: 5-day forward rolling standard deviation of log returns (realised volatility)
-- **Train**: 2014-01-01 → 2022-12-31
-- **Validation**: 2023-01-01 → 2023-12-31
-- **Test (OOS)**: 2024-01-01 → 2025 H1
+Seven neural architectures on the full SPX panel (iTransformer, LSTM, TCN, linear controls, a
+surface-attention model, and more) — **all lost to a 6-coefficient ridge.** Not by noise; by the
+kind of margin that says "wrong tool." The reason is the same everywhere:
 
----
+> Forecast error = *approximation* + *estimation* + *information gap* + *irreducible noise*.
+> A neural net only fixes the first term. Ours was already ~zero (the structure is simple once
+> named). The binding constraints were the **information gap** (the market already priced it) and
+> **estimation** (≈1,400 autocorrelated days is a few hundred effective samples — too few to pay
+> for a big model's variance). No architecture touches either.
 
-## Repository Structure
+**The one-liner the whole project converged to:** *every predictable piece of volatility has a name*
+— persistence, risk premium, state-dependence, the event clock — *and once you name it, a handful
+of linear coefficients beats any capacity model trying to approximate it.* The market is the model.
+
+## The two things that *did* work
+
+Because it wasn't all negative:
+
+1. **An intraday "event-clock" model.** On next-30-min RV, an oracle gate actually *opened* — trees
+   found structure a linear model missed. We localized it (FOMC 2pm blocks run ~3× normal vol; also
+   the open and the close), **named it** as clock × IV-premium interactions, and encoded it as ~50
+   explicit linear terms. That beat the trees in every fold (+7% over diurnal-HAR+IV) and re-closed
+   the gate. A better *classical* model, discovered by the discipline — not a neural win, but real.
+2. **A dated empirical finding:** the ultra-short 0DTE straddle premium that existed in 2022–2024
+   has **compressed to zero / slightly inverted in 2025–2026**, exactly as systematic 0DTE selling
+   got crowded. Nobody in the literature has this era yet.
+
+## What's in here
 
 ```
-├── data/                       # Raw data & fetcher
-│   ├── data.py                 #   EODHD API download script
-│   └── btc_2014_now.csv        #   Daily BTC prices (gitignored)
-├── baselines/                  # Benchmark target generation
-│   ├── targets.py              #   GARCH, Kalman, EWMA, rolling-std targets
-│   └── with_all_targets.csv    #   Combined targets file
-├── PatchTST/                   # Model implementation
-│   ├── models/
-│   │   └── patchtst_univar.py  #   Univariate PatchTST architecture
-│   ├── engines/
-│   │   ├── train_univar.py     #   Single-run training & evaluation
-│   │   └── run_patchtst_n_times.py  # 30-run ensemble driver
-│   ├── evaluate/
-│   │   └── plot_preds_univar.py  # Comparison metrics & plot
-│   └── utils/
-│       ├── config.py           #   YAML config loader
-│       └── default_univar.yaml #   Hyperparameters
-├── outputs/                    # Metrics CSV, prediction plot
-├── Makefile
-├── requirements.txt
-└── README.md
+volforecast/     the leakage-safe package (this is the reusable part)
+  timeutil.py      point-in-time guards — look-ahead is impossible by construction
+  panel.py         THE single alignment path (feat_* | tgt_* | meta_*, indexed by t0)
+  splits.py        walk-forward folds with purge/embargo at every boundary
+  data/            Databento adapter + volsolve.py (IV from raw quotes) + a synthetic vendor
+  features/        HAR, realized RV, IV surface, intraday structure, forward-only targets
+  models/          the HAR-prior + residual-trunk hybrid and the trunks that lost, honestly
+  eval/            QLIKE, pinball, HAC Diebold–Mariano, walk-forward runner
+scripts/         the chapters as runnable scripts (oracle, iv_only, study_0dte, intraday_*, pulls)
+experiments/     lab notebook: README = protocol + results, ledger.csv = every run
+tests/           the no-lookahead suite + solver round-trips — the guarantees, automated
+configs/         default.yaml (synthetic, no data needed) | spx.yaml | nvda.yaml
+archive/legacy/  the original project (see the P.S.)
 ```
 
----
-
-## Quickstart
+## Reproduce
 
 ```bash
-# 1. Clone & install
-git clone https://github.com/OuJiaPeng/DL-Volatility-Forecasting.git
-cd DL-Volatility-Forecasting
-pip install -r requirements.txt
-
-# 2. Generate targets & baselines (requires data/btc_2014_now.csv)
-make targets
-
-# 3. Train a single PatchTST model
-make train
-
-# 4. Run 30-model ensemble (takes ~30 min on GPU)
-make ensemble
-
-# 5. Generate comparison plot & metrics
-make plot
+pip install -e ".[dev]"
+make test        # full suite incl. the no-lookahead invariants — runs on synthetic data, no API key
+make all         # build panel -> baselines -> comparison table (synthetic)
 ```
 
-### Configuration
+Real data needs `pip install -e ".[databento]"` and `DATABENTO_API_KEY` (a `.env` works). Pulls are
+cached; price any pull first with `metadata.get_cost`. `python scripts/status.py` shows cache/ledger
+state at a glance.
 
-All model hyperparameters are in [`PatchTST/utils/default_univar.yaml`](PatchTST/utils/default_univar.yaml).
+## Where it goes next
+
+The one live thread is **microstructure**: total RV is saturated by persistence, but there's a faint,
+unstable signal in *jumps* from order flow, and the natural pivot is forecasting a **market-impact /
+liquidity parameter** (Kyle's λ, or a GLFT market-making parameter) instead of vol — because unlike
+vol, the market publishes no "impact surface" for you to lose to. That's a new project, in its own repo.
+
+## P.S.
+
+This started life as a BTC realized-vol forecaster (PatchTST + a pile of baselines). An audit found
+two structural look-ahead bugs — a forward-looking target reused as a model input, and two alignment
+paths that had silently drifted 60 rows apart. Both are the kind of leak that quietly makes results
+look great and mean nothing. Rather than patch them, the project was rebuilt from scratch so that
+class of bug is impossible by construction. The old code is frozen in [`archive/legacy/`](archive/legacy/)
+as a reminder of why the point-in-time discipline exists.
 
 ---
 
-## License
-
-MIT
+MIT.

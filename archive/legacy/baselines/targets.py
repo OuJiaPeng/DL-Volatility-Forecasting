@@ -146,6 +146,52 @@ def compute_kalman_rolling_forecast(
     return np.array(all_forecasts)
 
 
+# --- Honest h-step forecast baselines (added for a fair head-to-head) -------------
+# Each returns an (len(test_indices), horizon) array aligned ROW-FOR-ROW with the
+# rolling GARCH/Kalman arrays (one row per test_indices origin). All features are
+# strictly causal -- they use only returns up to the forecast origin -- so there is
+# no look-ahead, unlike the forward-looking target_std.
+
+# Persistence / random walk: next 5-day realised vol == most recent trailing 5-day
+# realised vol, held flat across the horizon. The single hardest naive benchmark.
+def compute_persistence_forecast(
+    returns: np.ndarray, horizon: int, window: int, test_indices: np.ndarray
+) -> np.ndarray:
+    rv_back = pd.Series(returns).rolling(window).std(ddof=1).values  # causal trailing std
+    return np.array([np.full(horizon, rv_back[i]) for i in test_indices])
+
+# EWMA / RiskMetrics-style: causal exponentially-weighted vol, held flat across horizon.
+def compute_ewma_forecast(
+    returns: np.ndarray, horizon: int, span: int, test_indices: np.ndarray
+) -> np.ndarray:
+    ewma_vol = pd.Series(returns).ewm(span=span, adjust=False).std().values  # causal
+    return np.array([np.full(horizon, ewma_vol[i]) for i in test_indices])
+
+# HAR-RV (Corsi 2009), adapted to daily data: regress the forward realised-vol target
+# on daily / weekly / monthly trailing absolute-return averages. Coefficients are fit
+# ONCE on all pre-test data (train_end_idx), then applied out-of-sample. The forecast
+# is the predicted forward 5-day vol, held flat across the horizon.
+def compute_har_forecast(
+    returns: np.ndarray, target_std: np.ndarray, horizon: int,
+    test_indices: np.ndarray, train_end_idx: int
+) -> np.ndarray:
+    abs_r = pd.Series(returns).abs()
+    feats = np.column_stack([
+        np.ones(len(returns)),
+        abs_r.values,                    # daily
+        abs_r.rolling(5).mean().values,  # weekly
+        abs_r.rolling(22).mean().values, # monthly
+    ])
+    y = np.asarray(target_std, dtype=float)
+    # fit on pre-test rows that have complete features and a non-NaN forward target
+    fit = np.zeros(len(returns), dtype=bool)
+    fit[:train_end_idx] = True
+    fit &= np.isfinite(feats).all(axis=1) & np.isfinite(y)
+    beta, *_ = np.linalg.lstsq(feats[fit], y[fit], rcond=None)
+    preds = np.clip(feats @ beta, 0.0, None)  # vol is non-negative
+    return np.array([np.full(horizon, preds[i]) for i in test_indices])
+
+
 def generate_all_targets(df: pd.DataFrame, window: int, out_dir: str):
     df = df.copy()
     returns = df['return'].values
@@ -215,3 +261,28 @@ if __name__ == '__main__':
         kalman_path = os.path.join(args.out_dir, 'kalman_rolling.npy')
         np.save(kalman_path, kalman_rolling)
         print(f"Saved rolling Kalman forecasts to {kalman_path}")
+
+        # Additional honest h-step baselines (HAR-RV, persistence, EWMA).
+        # Same indexing as the rolling GARCH/Kalman arrays (one row per test origin).
+        target_std_full = compute_rolling_std(returns, args.window)
+
+        har_forecast = compute_har_forecast(
+            returns, target_std_full, args.horizon, test_indices, test_start_idx
+        )
+        har_path = os.path.join(args.out_dir, 'har_rolling.npy')
+        np.save(har_path, har_forecast)
+        print(f"Saved HAR-RV forecasts to {har_path}")
+
+        persistence_forecast = compute_persistence_forecast(
+            returns, args.horizon, args.window, test_indices
+        )
+        persistence_path = os.path.join(args.out_dir, 'persistence_rolling.npy')
+        np.save(persistence_path, persistence_forecast)
+        print(f"Saved persistence (RW) forecasts to {persistence_path}")
+
+        ewma_forecast = compute_ewma_forecast(
+            returns, args.horizon, args.window, test_indices
+        )
+        ewma_path = os.path.join(args.out_dir, 'ewma_rolling.npy')
+        np.save(ewma_path, ewma_forecast)
+        print(f"Saved EWMA forecasts to {ewma_path}")
