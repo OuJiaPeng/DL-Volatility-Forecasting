@@ -21,19 +21,12 @@ LOCAL_NOTES.md
 # Personal docs (resume, notes) - local only
 docs/
 /*.tex
+archive/
 
 # Checkpoints and logs
 checkpoints/
 *.log
 *.tfevents.*
-
-# Legacy project (BTC/PatchTST) - keep the code, ignore heavy data/intermediates
-archive/legacy/outputs/patchtst_preds/
-archive/legacy/Exploratory/
-archive/legacy/data/*.csv
-archive/legacy/baselines/*.csv
-archive/legacy/baselines/*.npy
-!archive/legacy/baselines/with_all_targets.csv
 
 # OS
 .DS_Store

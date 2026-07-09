@@ -48,21 +48,6 @@ Across arenas, the predictable structure — persistence, premium, state depende
 — was captured by a few linear coefficients, and larger models approximating the same thing
 did worse.
 
-## Codas (not central — moved to `archive/codas/`)
-
-Kept for the record, out of the active surface. See [`archive/codas/`](../archive/codas/).
-
-- **Distributional**: the champion's residual *scale* is also unpredictable (ridge & GBT ≈ 0);
-  a constant-σ Gaussian beats GBT- and NN-quantile heads on pinball and coverage. Nothing left
-  in mean or scale.
-- **Deep hedging**: 917 real 1-day SPXW straddle episodes, hedged with ES. A neural policy that
-  nests the Whalley–Wilmott no-trade band matches it and no more (paired t < 1.2 at every cost);
-  the landscape near the classical optimum is flat. The network only kept up once it was
-  parametrized to start from WW.
-- **HF microstructure pilot**: 24 ES sessions, `bbo-1s`+`ohlcv-1s`. Total RV is
-  persistence-saturated (R² 0.92–0.96), L1 book adds ~nothing; a faint, unstable jump-share
-  signal is the only thread. Seed of the next (impact-forecasting) project, in its own repo.
-
 ## Ledger
 
 `ledger.csv` — one row per (experiment, arm): timestamp, exp id, arm, trunk, overrides,

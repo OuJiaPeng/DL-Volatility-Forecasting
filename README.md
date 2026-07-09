@@ -94,7 +94,6 @@ scripts/           experiment entrypoints
 experiments/       run ledger and notes
 tests/             no-lookahead and solver tests
 configs/           synthetic, SPX, NVDA configs
-archive/           older side studies and legacy BTC/PatchTST code
 ```
 
 ## Reproduce
