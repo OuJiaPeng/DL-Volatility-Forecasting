@@ -12,7 +12,13 @@ data_cache/
 # secrets
 .env
 
-# personal docs (resume, framer notes) — local only
+# Local assistant/editor state and prep notes
+.claude/
+.cursor/
+INTERVIEW_NOTES.md
+LOCAL_NOTES.md
+
+# Personal docs (resume, notes) - local only
 docs/
 /*.tex
 
@@ -21,7 +27,7 @@ checkpoints/
 *.log
 *.tfevents.*
 
-# Legacy project (BTC/PatchTST) — keep the CODE, ignore the heavy data/intermediates
+# Legacy project (BTC/PatchTST) - keep the code, ignore heavy data/intermediates
 archive/legacy/outputs/patchtst_preds/
 archive/legacy/Exploratory/
 archive/legacy/data/*.csv
